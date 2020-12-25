@@ -7,7 +7,7 @@ PROJECTS = {
             'Taylor Chung': 'taylor#9605'
         },
         'FB_GROUP': 'https://www.facebook.com/groups/ieeeops',
-        'SHEET_ID': '1q876IxXlR47mqeaiqgXGg17tRtj0mVBXNHXHnFkvURk'
+        'SPREAD_ID': '1q876IxXlR47mqeaiqgXGg17tRtj0mVBXNHXHnFkvURk'
     },
 
     'MICROMOUSE': {

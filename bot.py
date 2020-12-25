@@ -52,13 +52,15 @@ async def project(ctx, *args):
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
-        try:
-            projects = sheets.lookup(PROJECTS[args[0].upper()]['SHEET_ID'])
-        except Exception as e:
-            await ctx.send(e)
+        projects = ''
+        if 'SPREAD_ID' in info:
+            try:
+                projects = f'**{args[0]} Projects Due Soon:**'\
+                           f'```{sheets.lookup(info["SPREAD_ID"])}```'
+            except Exception as e:
+                await ctx.send(e)
         leads = '\n'.join([f'{name}: @{id}' for name, id in info['LEADS'].items()])
-        msg = f'**{args[0]} Projects Due Soon:**'\
-              f'```{projects}```' \
+        msg = f'{projects}' \
               f'**{args[0]} Project Leads:**\n' \
               f'```{leads}```' \
               f'**{args[0]} Links:**'

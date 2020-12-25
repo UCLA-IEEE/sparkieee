@@ -19,7 +19,6 @@ class SheetTransformer:
         self.service = build('sheets', 'v4', credentials=creds).spreadsheets()
         print('Sheet Transformer built successfully using token.pickle')
 
-    # try-except HttpError in next layer
     # todo: add lookup for specific users
     # todo: add lookback period parameter
     def lookup(self, spread_id, sheet_index=0, name=None):
