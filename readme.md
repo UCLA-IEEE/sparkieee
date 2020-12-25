@@ -12,11 +12,11 @@ Run the following command to install the Google Client library:
 
 Follow the directions under Step 1 in the Google Sheets API Python Quickstart Guide [here](https://developers.google.com/sheets/api/quickstart/python) to generate a `credentials.json` file. Drag it into the root directory.
 
-To generate a pickle file that allows the bot access to your account to read/write to Google Sheets, run the `generate_pickle.py` script. 
+To generate a pickle file that allows the bot access to your account to read/write to Google Sheets, run the `bot.py` script. 
 
-`python3 generate_pickle.py`
+`python3 bot.py`
 
-To generate a new one, just delete the existing `token.pickle` file and run the script. It will prompt you to login to your Google account and give the corresponding permissions.
+To generate a new one, just delete the existing `token.pickle` file and rerun the script. It will prompt you to login to your Google account and give the corresponding permissions.
 
 To create the Discord bot account, use the Discord developer portal to generate a Bot account. Under the 'OAuth2' menu, give the account a 'bot' scope and 'Administrator' privileges, then use the generated URL to invite the bot to the server.
 

@@ -2,6 +2,11 @@ from __future__ import print_function
 import pickle
 import os.path
 from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+
+# If modifying these scopes, delete the file token.pickle. https://developers.google.com/sheets/api/guides/authorizing
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
 # Project name, date, and completion %
 HEADER_ROWS = 3
@@ -13,8 +18,15 @@ class SheetTransformer:
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
         if not creds or not creds.valid:
-            raise Exception('The token.pickle file either does not exist or is not valid.'
-                            'Please generate a new one using generate_pickle.py.')
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                flow = InstalledAppFlow.from_client_secrets_file(
+                    'credentials.json', SCOPES)
+                creds = flow.run_local_server(port=0)
+            # Save the credentials for the next run
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
 
         self.service = build('sheets', 'v4', credentials=creds).spreadsheets()
         print('Sheet Transformer built successfully using token.pickle')
