@@ -1,7 +1,7 @@
-import creds
 import discord
 from creds import *
 from discord.ext import commands
+from sheet_transformer import SheetTransformer
 
 client = commands.Bot(command_prefix='.', help_command=None)
 
@@ -60,5 +60,7 @@ async def project(ctx, *args):
                           url=f'{info["FB_GROUP"]}')
         await ctx.send(msg, embed=e)
 
-client.run(BOT_TOKEN)
+if __name__ == '__main__':
+    sheets = SheetTransformer()
+    client.run(BOT_TOKEN)
 
