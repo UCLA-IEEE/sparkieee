@@ -6,7 +6,8 @@ PROJECTS = {
             'Ryeder Geyer': 'OPS#4995',
             'Taylor Chung': 'taylor#9605'
         },
-        'FB_GROUP': 'https://www.facebook.com/groups/ieeeops'
+        'FB_GROUP': 'https://www.facebook.com/groups/ieeeops',
+        'SHEET_ID': '1q876IxXlR47mqeaiqgXGg17tRtj0mVBXNHXHnFkvURk'
     },
 
     'MICROMOUSE': {
@@ -14,7 +15,7 @@ PROJECTS = {
             'Bradley Schulz': 'bschulz#0605',
             'Tyler Price': 'tyler.4p#7755'
         },
-        'FB_GROUP': 'https://www.facebook.com/groups/910014872738486'
+        'FB_GROUP': 'https://www.facebook.com/groups/910014872738486',
     },
 
     'AIRCOPTER': {

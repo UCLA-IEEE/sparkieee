@@ -15,7 +15,7 @@ async def help(ctx):
           'I can assist you with checking off project completion and more!\n\n' \
           f'**Commands:**\n' \
           '```projects          directory of current active projects\n' \
-          'project p         look up project lead info, deadlines, links, and more for p```' \
+          'project <p>       look up project deadlines, contact info, links, and more```' \
           f'To run a command, type in `{client.command_prefix}[command]`.\n\n' \
           '**Links:**\n' \
 
@@ -52,15 +52,20 @@ async def project(ctx, *args):
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
+        try:
+            projects = sheets.lookup(PROJECTS[args[0].upper()]['SHEET_ID'])
+        except Exception as e:
+            await ctx.send(e)
         leads = '\n'.join([f'{name}: @{id}' for name, id in info['LEADS'].items()])
-        msg = f'**{args[0]} Project Leads:**\n' \
+        msg = f'**{args[0]} Projects Due Soon:**'\
+              f'```{projects}```' \
+              f'**{args[0]} Project Leads:**\n' \
               f'```{leads}```' \
               f'**{args[0]} Links:**'
         e = discord.Embed(title=f'{args[0]} Facebook Group',
                           url=f'{info["FB_GROUP"]}')
         await ctx.send(msg, embed=e)
 
-if __name__ == '__main__':
-    sheets = SheetTransformer()
-    client.run(BOT_TOKEN)
+sheets = SheetTransformer()
+client.run(BOT_TOKEN)
 
