@@ -46,11 +46,23 @@ class SheetTransformer:
         if not values:
             raise Exception('Error, no values found.')
 
+        member_row = None
+        if name:
+            for row in values:
+                if row[0].upper().strip() == name.upper().strip():
+                    member_row = row
+            if member_row == None:
+                raise Exception(f'Error, project member {name} not found.')
+
         summary = ''
         for i, project in enumerate(values[0]):
             if project == '':
                 continue
-            summary = summary + f'{project} (due {values[1][i]})\n'
+            member_status = ''
+            if member_row:
+                member_status = ': ❌' if i >= len(member_row) or member_row[i] == '' else ': ✅'
+
+            summary = summary + f'{project} (due {values[1][i]}){member_status}\n'
         return summary
 
     # helper function to convert numerical column to letter column (Google Sheets format)

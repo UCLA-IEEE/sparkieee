@@ -13,10 +13,10 @@ async def on_ready():
 async def help(ctx):
     msg = 'Hello! I am **SparkIEEE**, an IEEE Discord bot created by Bryan Wong. \n' \
           'I can assist you with checking off project completion and more!\n\n' \
-          f'**Commands:**\n' \
+          f'**Commands:** To run a command, type in `{client.command_prefix}[command]`\n' \
           '```projects          directory of current active projects\n' \
-          'project <p>       look up project deadlines, contact info, links, and more```' \
-          f'To run a command, type in `{client.command_prefix}[command]`.\n\n' \
+          'project p         look up project deadlines, contact info, links, and more\n' \
+          'status p "u"      look up project completion of member u of project p```\n' \
           '**Links:**\n' \
 
     # todo: add image urls/descriptions
@@ -67,6 +67,30 @@ async def project(ctx, *args):
         e = discord.Embed(title=f'{args[0]} Facebook Group',
                           url=f'{info["FB_GROUP"]}')
         await ctx.send(msg, embed=e)
+
+@client.command()
+async def status(ctx, *args):
+    if len(args) < 2:
+        err_msg = 'Please supply the command with project and member name arguments.\n' \
+            f'For example, `{client.command_prefix}status OPS "Kathy Daniels"` or ' \
+            f'`{client.command_prefix}status Micromouse "Justin Jianto"`.'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{list(PROJECTS.keys())}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        if 'SPREAD_ID' in info:
+            try:
+                msg = f'**{args[1]}\'s {args[0]} Project Status:**' \
+                    f'```{sheets.lookup(info["SPREAD_ID"], name=args[1])}```'
+            except Exception as e:
+                await ctx.send(e)
+        else:
+            msg = f'{args[0]} does not currently have a checkoff sheet.'
+        await ctx.send(msg)
 
 sheets = SheetTransformer()
 client.run(BOT_TOKEN)
