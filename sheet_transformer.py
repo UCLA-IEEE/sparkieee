@@ -31,10 +31,8 @@ class SheetTransformer:
         self.service = build('sheets', 'v4', credentials=creds).spreadsheets()
         print('Sheet Transformer built successfully using token.pickle')
 
-    # todo: add lookup for specific users
     # todo: add lookback period parameter
-    def lookup(self, spread_id, sheet_index=0, name=None):
-
+    def lookup(self, spread_id, name=None, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()
         sheet = spread_info.get('sheets')[sheet_index]
         n_rows = sheet.get('properties').get('gridProperties').get('rowCount') if name else HEADER_ROWS
@@ -48,9 +46,10 @@ class SheetTransformer:
 
         member_row = None
         if name:
-            for row in values:
-                if row[0].upper().strip() == name.upper().strip():
-                    member_row = row
+            for r in values:
+                if r[0].upper().strip() == name.upper().strip():
+                    member_row = r
+                    break
             if member_row == None:
                 raise Exception(f'Error, project member {name} not found.')
 
@@ -60,10 +59,53 @@ class SheetTransformer:
                 continue
             member_status = ''
             if member_row:
-                member_status = ': ❌' if i >= len(member_row) or member_row[i] == '' else ': ✅'
+                member_status = ': ❌' if i >= len(member_row) or member_row[i] == '' else f': {member_row[i].strip()}'
+                if member_status == ': x':
+                    member_status = ': ✅'
 
             summary = summary + f'{project} (due {values[1][i]}){member_status}\n'
         return summary
+
+    def checkoff(self, spread_id, assignment, name, val='y', sheet_index=0):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        title = sheet.get('properties').get('title')
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+        if not values:
+            raise Exception('Error, no values found.')
+
+        old_val = ''
+        member_row = None
+        for row, r in enumerate(values):
+            if r[0].upper().strip() == name.upper().strip():
+                member_row = row + 1
+        if member_row == None:
+            raise Exception(f'Error, project member **{name}** not found.')
+
+        assignment_col = None
+        for col, a in enumerate(values[0]):
+            if a.upper().strip() == assignment.upper().strip():
+                if col < len(values[member_row]):
+                    old_val = values[member_row - 1][col]
+                assignment_col = self.column_to_letter(col + 1)
+                break
+        if assignment_col == None:
+            raise Exception(f'Error, assignment **{assignment}** not found.')
+
+        res = self.service.values().update(spreadsheetId=spread_id,
+                                     valueInputOption='RAW',
+                                     range=f'{title}!{assignment_col}{member_row}:{assignment_col}{member_row}',
+                                     body={
+                                         'range': f'{title}!{assignment_col}{member_row}:{assignment_col}{member_row}',
+                                         'values': [[val]],
+                                     }).execute()
+
+        return old_val
+
 
     # helper function to convert numerical column to letter column (Google Sheets format)
     def column_to_letter(self, column):
