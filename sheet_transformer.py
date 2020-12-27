@@ -8,8 +8,8 @@ from google.auth.transport.requests import Request
 # If modifying these scopes, delete the file token.pickle. https://developers.google.com/sheets/api/guides/authorizing
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
-# Project name, date, and completion %
-HEADER_ROWS = 3
+HEADER_ROWS = 3 # Project name, date, and completion %
+PROJECT_COL = 3 # First Col that contains projects
 
 class SheetTransformer:
     def __init__(self):
@@ -96,15 +96,42 @@ class SheetTransformer:
         if assignment_col == None:
             raise Exception(f'Error, assignment **{assignment}** not found.')
 
-        res = self.service.values().update(spreadsheetId=spread_id,
+        self.service.values().update(spreadsheetId=spread_id,
                                      valueInputOption='RAW',
                                      range=f'{title}!{assignment_col}{member_row}:{assignment_col}{member_row}',
                                      body={
                                          'range': f'{title}!{assignment_col}{member_row}:{assignment_col}{member_row}',
                                          'values': [[val]],
                                      }).execute()
-
         return old_val
+
+    #todo: add fancy formatting (percents, colors, dates, etc.)
+    def add_assignment(self, spread_id, assignment, deadline, sheet_index=0):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        title = sheet.get('properties').get('title')
+
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A1:1').execute()
+        assignments = result.get('values')
+        new_col = len(assignments[0]) + 1 if assignments else PROJECT_COL
+        new_col = self.column_to_letter(new_col)
+
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A:A').execute()
+        members = result.get('values')
+        n_members = len(members) - HEADER_ROWS if members else 0
+        percent= f'=({n_members}-COUNTBLANK({new_col}{HEADER_ROWS+1}:{new_col}{HEADER_ROWS+n_members}))/{n_members}'
+
+        self.service.values().clear(spreadsheetId=spread_id, range=f'{title}!{new_col}:{new_col}').execute()
+        res = self.service.values().update(spreadsheetId=spread_id,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!{new_col}:{new_col}',
+                                     body={
+                                         'range': f'{title}!{new_col}:{new_col}',
+                                         'values': [[assignment, deadline, percent]],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
 
 
     # helper function to convert numerical column to letter column (Google Sheets format)

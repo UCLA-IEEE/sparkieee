@@ -23,7 +23,8 @@ async def help(ctx):
           '```checkoff p a u [v]   checkoff user u for project p, assignment a\n' \
           '                     v is the new value, by default it\'s "x"\n' \
           f'                     to add notes, {client.command_prefix}checkoff p a u "checkpoint 1"\n' \
-          '```**Links:**\n'
+          'addassign p a d      add assignment a, due on date d, to project p```\n\n' \
+          '**Links:**\n'
 
     # todo: add image urls/descriptions
     ieee_website = discord.Embed(title='IEEE at UCLA Website',
@@ -99,6 +100,7 @@ async def status(ctx, *args):
         await ctx.send(msg)
 
 @client.command()
+@commands.has_role("officers")
 async def checkoff(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
@@ -127,6 +129,29 @@ async def checkoff(ctx, *args):
             msg = f'{args[0]} does not currently have a checkoff sheet.'
         await ctx.send(msg)
 
+@client.command()
+@commands.has_role("officers")
+async def addassign(ctx, *args):
+    if len(args) < 3:
+        err_msg = 'Please supply the command with project and deadline arguments.\n' \
+            f'For example, `{client.command_prefix}addassign WRAP "Project 1" "2/11/2020"'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{list(PROJECTS.keys())}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        if 'SPREAD_ID' in info:
+            try:
+                sheets.add_assignment(info["SPREAD_ID"], args[1], args[2])
+                msg = f'Successfully added assignment **{args[1]}** to the **{args[0]}** spreadsheet, due **{args[2]}**'
+            except Exception as e:
+                await ctx.send(e)
+        else:
+            msg = f'{args[0]} does not currently have a checkoff sheet.'
+        await ctx.send(msg)
 
 @client.command()
 async def extend(ctx, *args):
