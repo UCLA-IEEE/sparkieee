@@ -1,4 +1,4 @@
-BOT_TOKEN = 'INSERT SECRET BOT TOKEN HERE'
+BOT_TOKEN = 'INSERT SECRET BOT KEY HERE'
 
 PROJECTS = {
     'OPS': {
@@ -49,3 +49,13 @@ PROJECTS = {
         'FB_GROUP': 'https://www.facebook.com/groups/324536415200701'
     }
 }
+
+# Checkoff Spreadsheet consts
+HEADER_ROWS = 3 # Project name, date, and completion %
+PROJECT_COL = 3 # First Col that contains projects
+DATE_ROW_INDEX = 1 # Index of row that contains deadlines
+
+# Lab Hour Spreadsheet consts
+LAB_HOURS = '1YLaaSEy0RsXwlboPSnK-3G-Vd901aoP4d5TyJMu-Tvo'
+FIRST_LH_ROW_INDEX = 1
+FIRST_LH_COL_INDEX = 0

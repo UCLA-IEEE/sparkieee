@@ -12,18 +12,19 @@ async def on_ready():
 @client.command()
 async def help(ctx):
     msg = 'Hello! I am **SparkIEEE**, an IEEE Discord bot created by Bryan Wong. \n' \
-          'I can assist you with checking off project completion and more!\n\n' \
-          f'**Commands:** \n' \
-          f'To run a command, type in `{client.command_prefix}[command]`.\n' \
-          f'For fields with multiple words (e.g. names), use quotation marks `""`\n' \
-          '```projects             directory of current active projects\n' \
-          'project p            lookup project deadlines, contact info, links, and more\n' \
-          'status p u           lookup project completion status of member u in project p```\n' \
+         f'To run a command, type in `{client.command_prefix}[command]`.\n' \
+         f'For fields with multiple words (e.g. names), use quotation marks `""`\n\n' \
+         f'**Commands:** \n' \
+          '```projects             directory of current active projects\n\n' \
+          'project p            lookup project deadlines, contact info, links, and more\n\n' \
+          'status p u           lookup project completion status of member u in project p\n\n' \
+          'labhours o           lookup lab hours for officer o\n```\n' \
           '**Project Lead Commands:**\n' \
           '```checkoff p a u [v]   checkoff user u for project p, assignment a\n' \
           '                     v is the new value, by default it\'s "x"\n' \
-          f'                     to add notes, {client.command_prefix}checkoff p a u "checkpoint 1"\n' \
-          'addassign p a d      add assignment a, due on date d, to project p```\n\n' \
+         f'                     to add notes, {client.command_prefix}checkoff p a u "checkpoint 1"\n\n' \
+          'addassign p a d      add assignment a, due on date d, to project p\n\n' \
+          'extend p a d         change project p\'s assignment a deadline to d```\n' \
           '**Links:**\n'
 
     # todo: add image urls/descriptions
@@ -66,10 +67,13 @@ async def project(ctx, *args):
                            f'```{sheets.lookup(info["SPREAD_ID"])}```'
             except Exception as e:
                 await ctx.send(e)
-        leads = '\n'.join([f'{name}: @{id}' for name, id in info['LEADS'].items()])
-        msg = f'{projects}' \
+        nl = '\n- '
+        leads = '\n'.join([f'{name}: @{id}\n'
+                           f'- {nl.join(sheets.get_lab_hours(LAB_HOURS, name))}\n'
+                           for name, id in info['LEADS'].items()])
+        msg = f'{projects}\n' \
               f'**{args[0]} Project Leads:**\n' \
-              f'```{leads}```' \
+              f'```{leads}```\n' \
               f'**{args[0]} Links:**'
         e = discord.Embed(title=f'{args[0]} Facebook Group',
                           url=f'{info["FB_GROUP"]}')
@@ -98,6 +102,29 @@ async def status(ctx, *args):
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
         await ctx.send(msg)
+
+@client.command()
+async def labhours(ctx, *args):
+    if len(args) == 0:
+        err_msg = 'Please supply the command with an officer argument.\n' \
+                  f'For example, `{client.command_prefix}labhours Bryan Wong`.\n' \
+                  'A full list of lab hours can be found at http://ieeebruins.com/lab'
+        await ctx.send(err_msg)
+    else:
+        try:
+            # This command is buggy when multiple officers with same first name.
+            #     Ex: labhours David returns lab hours of BOTH Davids
+            hours = sheets.get_lab_hours(LAB_HOURS, args[0])
+            if hours:
+                hours_string = '\n'.join(hours)
+                msg = f'Here are **{args[0]}**\'s Lab Hours:\n' \
+                      f'```{hours_string}```'
+            else:
+                msg = f'**{args[0]}** is either not an officer or does not have lab hours.\n' \
+                      'A full list of lab hours can be found at http://ieeebruins.com/lab'
+            await ctx.send(msg)
+        except Exception as e:
+            await ctx.send(e)
 
 @client.command()
 @commands.has_role("officers")
@@ -133,8 +160,8 @@ async def checkoff(ctx, *args):
 @commands.has_role("officers")
 async def addassign(ctx, *args):
     if len(args) < 3:
-        err_msg = 'Please supply the command with project and deadline arguments.\n' \
-            f'For example, `{client.command_prefix}addassign WRAP "Project 1" "2/11/2020"'
+        err_msg = 'Please supply the command with project, assignment, and deadline arguments.\n' \
+            f'For example, `{client.command_prefix}addassign WRAP "Project 1" "2/11/2020"`'
         await ctx.send(err_msg)
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
@@ -154,8 +181,29 @@ async def addassign(ctx, *args):
         await ctx.send(msg)
 
 @client.command()
+@commands.has_role("officers")
 async def extend(ctx, *args):
-    pass
+    if len(args) < 3:
+        err_msg = 'Please supply the command with project, assignment, and new deadline arguments.\n' \
+            f'For example, `{client.command_prefix}extend OPS "Project 1" "10/11/2020"`'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{list(PROJECTS.keys())}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        if 'SPREAD_ID' in info:
+            try:
+                old_deadline = sheets.change_deadline(info["SPREAD_ID"], args[1], args[2])
+                msg = f'Successfully changed **{args[0]}** assignment **{args[1]}** deadline ' \
+                      f'from **{old_deadline}** to **{args[2]}**'
+            except Exception as e:
+                await ctx.send(e)
+        else:
+            msg = f'{args[0]} does not currently have a checkoff sheet.'
+        await ctx.send(msg)
 
 sheets = SheetTransformer()
 client.run(BOT_TOKEN)
