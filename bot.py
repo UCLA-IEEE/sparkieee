@@ -29,7 +29,9 @@ async def help(ctx):
           '                     v is the new value, by default it\'s "x"\n' \
          f'                     to add notes, {client.command_prefix}checkoff p a u "checkpoint 1"\n\n' \
           'addassign p a d      add assignment a, due on date d, to project p\n\n' \
-          'extend p a d         change project p\'s assignment a deadline to d```\n' \
+          'extend p a d         change project p\'s assignment a deadline to d\n\n' \
+          'closelab             disable lab hours reminders for the day\n\n' \
+          'openlab              reenable lab hours reminders, starting tomorrow```\n' \
           '**Links:**\n'
 
     # todo: add image urls/descriptions
@@ -272,6 +274,3 @@ async def before():
 sheets = SheetTransformer()
 lab_hours_reminder.start()
 client.run(BOT_TOKEN)
-
-
-
