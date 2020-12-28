@@ -1,10 +1,12 @@
+import asyncio
 import discord
 import pytz
 from creds import *
 from datetime import datetime
-from discord.ext import commands
+from discord.ext import commands, tasks
 from sheet_transformer import SheetTransformer
 
+lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
 
 @client.event
@@ -72,7 +74,7 @@ async def project(ctx, *args):
                 await ctx.send(e)
         nl = '\n- '
         leads = '\n'.join([f'{name}: @{id}\n'
-                           f'- {nl.join(sheets.get_lab_hours(LAB_HOURS, name))}\n'
+                           f'- {nl.join(sheets.get_lab_hours_by_name(LAB_HOURS, name))}\n'
                            for name, id in info['LEADS'].items()])
         msg = f'{projects}\n' \
               f'**{args[0]} Project Leads:**\n' \
@@ -109,6 +111,9 @@ async def status(ctx, *args):
 @client.command()
 async def labhours(ctx, *args):
     if len(args) == 0:
+        if not lab_open:
+            await ctx.send('The Lab is closed today. For a full list of lab hours, visit http://ieeebruins.com/lab.')
+            return
         try:
             date = datetime.now(tz=pytz.utc)
             date = date.astimezone(pytz.timezone('US/Pacific'))
@@ -150,6 +155,7 @@ async def checkoff(ctx, *args):
     else:
         info = PROJECTS[args[0].upper()]
         new_val = 'x' if len(args) < 4 else args[3]
+        msg = ''
         if 'SPREAD_ID' in info:
             try:
                 old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=args[2], val=new_val)
@@ -213,6 +219,59 @@ async def extend(ctx, *args):
             msg = f'{args[0]} does not currently have a checkoff sheet.'
         await ctx.send(msg)
 
+@client.command()
+@commands.has_role("officers")
+async def closelab(ctx):
+    global lab_open
+    lab_open = False
+    await ctx.send(f'The lab is now closed. Lab Hours reminders will cease until '
+             f'the `{client.command_prefix}openlab` command is used to reopen it.')
+
+
+@client.command()
+@commands.has_role("officers")
+async def openlab(ctx):
+    global lab_open
+    lab_open = True
+    await ctx.send(f'The lab is now reopened. Lab Hours reminders will restart tomorrow.')
+
+@tasks.loop(hours=1, count=9)
+async def lab_hours_reminder():
+    date = datetime.now(tz=pytz.utc)
+    date = date.astimezone(pytz.timezone('US/Pacific'))
+    if not lab_open or date.weekday() >= 5:  # weekend
+        return
+    try:
+        if date.hour == 18:
+            msg = f'Lab Hours have officially ended. For a full list of lab hours, visit http://ieeebruins.com/lab.'
+        else:
+            shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
+            msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
+                  f'```{officers}```'
+        lab_channel = client.get_channel(LAB_CHANNEL_ID)
+        if lab_channel:
+            await lab_channel.send(msg)
+    except Exception as e:
+        print(e)
+
+@lab_hours_reminder.before_loop
+async def before():
+    await client.wait_until_ready()
+    date = datetime.today()
+    future = datetime(date.year, date.month, date.day, LAB_HOURS_START_TIME, 0) # Lab Hours start at 10 am
+    if date.hour >= LAB_HOURS_START_TIME:
+        future += datetime.timedelta(days=1)
+    wait_period = (future - date).total_seconds()
+    print(f'Waiting for {wait_period} seconds before starting lab hour reminders.')
+    await asyncio.sleep(wait_period)
+    print("Beginning Lab Hours scheduled reminders")
+    lab_channel = client.get_channel(LAB_CHANNEL_ID)
+    if lab_channel and lab_open:
+        await lab_channel.send('Lab Hours have begun!')
+
 sheets = SheetTransformer()
+lab_hours_reminder.start()
 client.run(BOT_TOKEN)
+
+
 
