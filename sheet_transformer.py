@@ -1,7 +1,9 @@
 from __future__ import print_function
-import pickle
+import calendar
 import os.path
+import pickle
 from creds import *
+from datetime import datetime
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -162,7 +164,7 @@ class SheetTransformer:
                                      }).execute()
         return old_deadline
 
-    def get_lab_hours(self, spread_id, name, sheet_index=0):
+    def get_lab_hours_by_name(self, spread_id, name, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()
         sheet = spread_info.get('sheets')[sheet_index]
         title = sheet.get('properties').get('title')
@@ -186,6 +188,35 @@ class SheetTransformer:
                 hours.append(f'{day}: {times[0] if len(times) == 1 else ", ".join(times)}')
             col = col + 1
         return hours
+
+    def get_lab_hours_by_time(self, spread_id, time, sheet_index=0):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        title = sheet.get('properties').get('title')
+
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}').execute()
+        values = result.get('values')
+
+        hour = str(time.hour % 12) + 'pm' if time.hour / 12 else 'am'
+        day_of_week = calendar.day_name[time.weekday()]
+
+        shift_str = ''
+        col = None
+        for c, day in enumerate(values[FIRST_LH_ROW_INDEX]):
+            if day_of_week in day:
+                col = c
+                break
+        row = None
+        for r, shift in enumerate(values):
+            if shift and shift[FIRST_LH_COL_INDEX].startswith(hour):
+                row = r
+                shift_str = f'{day_of_week} {shift[FIRST_LH_COL_INDEX].strip()}'
+                break
+        if not col or not row or col >= len(values[row]):
+            raise Exception("No lab hours found for the current time.")
+        else:
+            return shift_str, values[row][col]
 
     # helper function to convert numerical column to letter column (Google Sheets format)
     def column_to_letter(self, column):

@@ -1,5 +1,7 @@
 import discord
+import pytz
 from creds import *
+from datetime import datetime
 from discord.ext import commands
 from sheet_transformer import SheetTransformer
 
@@ -18,6 +20,7 @@ async def help(ctx):
           '```projects             directory of current active projects\n\n' \
           'project p            lookup project deadlines, contact info, links, and more\n\n' \
           'status p u           lookup project completion status of member u in project p\n\n' \
+          'labhours             whose lab hours is it right now?\n\n' \
           'labhours o           lookup lab hours for officer o\n```\n' \
           '**Project Lead Commands:**\n' \
           '```checkoff p a u [v]   checkoff user u for project p, assignment a\n' \
@@ -106,15 +109,20 @@ async def status(ctx, *args):
 @client.command()
 async def labhours(ctx, *args):
     if len(args) == 0:
-        err_msg = 'Please supply the command with an officer argument.\n' \
-                  f'For example, `{client.command_prefix}labhours Bryan Wong`.\n' \
-                  'A full list of lab hours can be found at http://ieeebruins.com/lab'
-        await ctx.send(err_msg)
+        try:
+            date = datetime.now(tz=pytz.utc)
+            date = date.astimezone(pytz.timezone('US/Pacific'))
+            shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
+            msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
+                  f'```{officers}```'
+            await ctx.send(msg)
+        except Exception as e:
+            await ctx.send(e)
     else:
         try:
             # This command is buggy when multiple officers with same first name.
             #     Ex: labhours David returns lab hours of BOTH Davids
-            hours = sheets.get_lab_hours(LAB_HOURS, args[0])
+            hours = sheets.get_lab_hours_by_name(LAB_HOURS, args[0])
             if hours:
                 hours_string = '\n'.join(hours)
                 msg = f'Here are **{args[0]}**\'s Lab Hours:\n' \
