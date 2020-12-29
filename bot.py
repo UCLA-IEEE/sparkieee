@@ -9,10 +9,66 @@ from sheet_transformer import SheetTransformer
 lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
 
+# If the message already exists, no need to create it again
+async def join_roles_announcement():
+    text = "React to this message with your project's emoji to be assigned that role! Unreact to reverse it.\n" \
+           "You'll get access to a project-specific text channel."
+    role_channel = client.get_channel(ROLE_CHANNEL_ID)
+    if role_channel:
+        message = await role_channel.send(text)
+        await message.add_reaction(emoji=client.get_emoji(OPS_EMOJI))
+        await message.add_reaction(emoji=client.get_emoji(MM_EMOJI))
+        await message.add_reaction(emoji=client.get_emoji(AIR_EMOJI))
+        await message.add_reaction(emoji=client.get_emoji(DAV_EMOJI))
+        await message.add_reaction(emoji=client.get_emoji(WRAP_EMOJI))
+
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game(name=f'what is love? 🤖 | {client.command_prefix}help'))
     print(f'SparkIEEE has logged in as {client.user}')
+    await client.change_presence(activity=discord.Game(name=f'what is love? 🤖 | {client.command_prefix}help'))
+    # await join_roles_announcement()
+
+@client.event
+async def on_raw_reaction_add(payload):
+    if payload.message_id != REACT_MSG_ID:
+        return
+    member = payload.member
+    guild = member.guild
+
+    role = None
+    if payload.emoji == client.get_emoji(OPS_EMOJI):
+        role = discord.utils.get(guild.roles, name="OPS")
+    if payload.emoji == client.get_emoji(MM_EMOJI):
+        role = discord.utils.get(guild.roles, name="Micromouse")
+    if payload.emoji == client.get_emoji(AIR_EMOJI):
+        role = discord.utils.get(guild.roles, name="Aircopter")
+    if payload.emoji == client.get_emoji(DAV_EMOJI):
+        role = discord.utils.get(guild.roles, name="DAV")
+    if payload.emoji == client.get_emoji(WRAP_EMOJI):
+        role = discord.utils.get(guild.roles, name="WRAP")
+    if role:
+        await member.add_roles(role)
+
+@client.event
+async def on_raw_reaction_remove(payload):
+    if payload.message_id != REACT_MSG_ID:
+        return
+    guild = await client.fetch_guild(payload.guild_id)
+    member = await guild.fetch_member(payload.user_id)
+
+    role = None
+    if payload.emoji == client.get_emoji(OPS_EMOJI):
+        role = discord.utils.get(guild.roles, name="OPS")
+    if payload.emoji == client.get_emoji(MM_EMOJI):
+        role = discord.utils.get(guild.roles, name="Micromouse")
+    if payload.emoji == client.get_emoji(AIR_EMOJI):
+        role = discord.utils.get(guild.roles, name="Aircopter")
+    if payload.emoji == client.get_emoji(DAV_EMOJI):
+        role = discord.utils.get(guild.roles, name="DAV")
+    if payload.emoji == client.get_emoji(WRAP_EMOJI):
+        role = discord.utils.get(guild.roles, name="WRAP")
+    if role:
+        await member.remove_roles(role)
 
 @client.command()
 async def help(ctx):
