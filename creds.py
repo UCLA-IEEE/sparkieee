@@ -8,7 +8,7 @@ PROJECTS = {
             'Taylor Chung': 'taylor#9605'
         },
         'FB_GROUP': 'https://www.facebook.com/groups/ieeeops',
-        'SPREAD_ID': '1q876IxXlR47mqeaiqgXGg17tRtj0mVBXNHXHnFkvURk'
+        'SPREAD_ID': '1fmcb5f__16A4G9rROlBHqBV-ceITsuybxnP33OaMWs8'
     },
 
     'MICROMOUSE': {
@@ -53,8 +53,9 @@ PROJECTS = {
 
 # Checkoff Spreadsheet consts
 HEADER_ROWS = 3 # Project name, date, and completion %
-PROJECT_COL = 3 # First Col that contains projects
+PROJECT_COL_INDEX = 2 # Index of first col that contains projects
 DATE_ROW_INDEX = 1 # Index of row that contains deadlines
+PERCENT_ROW_INDEX = 2 # Index of row that contains percentages
 
 # Lab Hour Spreadsheet consts
 LAB_HOURS = '1YLaaSEy0RsXwlboPSnK-3G-Vd901aoP4d5TyJMu-Tvo'

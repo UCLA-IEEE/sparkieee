@@ -112,8 +112,8 @@ class SheetTransformer:
         result = self.service.values().get(spreadsheetId=spread_id,
                                            range=f'{title}!A1:1').execute()
         assignments = result.get('values')
-        new_col = len(assignments[0]) + 1 if assignments else PROJECT_COL
-        new_col = self.column_to_letter(new_col)
+        new_col_index = len(assignments[0]) if assignments else PROJECT_COL_INDEX
+        new_col = self.column_to_letter(new_col_index + 1)
 
         result = self.service.values().get(spreadsheetId=spread_id,
                                            range=f'{title}!A:A').execute()
@@ -130,6 +130,79 @@ class SheetTransformer:
                                          'values': [[assignment, deadline, percent]],
                                          'majorDimension': 'COLUMNS',
                                      }).execute()
+
+        # Add pretty formatting (colors/number formatting)
+        percent_range = {
+            'sheetId': 0,
+            'startRowIndex': PERCENT_ROW_INDEX,
+            'endRowIndex': PERCENT_ROW_INDEX + 1,
+            'startColumnIndex': new_col_index,
+            'endColumnIndex': new_col_index + 1,
+        }
+        checkoff_range = {
+            'sheetId': 0,
+            'startRowIndex': HEADER_ROWS,
+            'endRowIndex': HEADER_ROWS + n_members,
+            'startColumnIndex': new_col_index,
+            'endColumnIndex': new_col_index + 1,
+        }
+        requests = [{
+            'addConditionalFormatRule': {
+                'rule': {
+                    'ranges': [percent_range],
+                    'gradientRule': {
+                        'minpoint': {
+                            'color': {'red': 0.96, 'green': 0.8, 'blue': 0.8},
+                            'type': 'NUMBER',
+                            'value': '0'
+                        },
+                        'midpoint': {
+                            'color': {'red': 1.0, 'green': 0.9, 'blue': 0.6},
+                            'type': 'NUMBER',
+                            'value': '0.5'
+                        },
+                        'maxpoint': {
+                            'color': {'red': 0.72, 'green': 0.88, 'blue': 0.8},
+                            'type': 'NUMBER',
+                            'value': '1.0'
+                        }
+                    }
+                },
+                'index': 0
+            }
+        }, {
+            'repeatCell': {
+                'range': percent_range,
+                'cell': {
+                  'userEnteredFormat': {
+                    'numberFormat': {
+                      'type': 'PERCENT',
+                      'pattern': '#0%'
+                    }
+                  }
+                },
+                'fields': 'userEnteredFormat.numberFormat'
+              }
+        }, {
+            'addConditionalFormatRule': {
+                'rule': {
+                    'ranges': [checkoff_range],
+                    'booleanRule': {
+                        'condition': {
+                            'type': 'BLANK',
+                        },
+                        'format': {
+                            'backgroundColor': {'red': 0.96, 'green': 0.8, 'blue': 0.8}
+                        }
+                    }
+                },
+                'index': 1
+            }
+        }]
+        body = {
+            'requests': requests
+        }
+        response = self.service.batchUpdate(spreadsheetId=spread_id, body=body).execute()
         return
 
     def change_deadline(self, spread_id, assignment, deadline, sheet_index=0):

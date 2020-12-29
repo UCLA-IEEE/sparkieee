@@ -187,12 +187,14 @@ async def addassign(ctx, *args):
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
+        msg = ''
         if 'SPREAD_ID' in info:
-            try:
-                sheets.add_assignment(info["SPREAD_ID"], args[1], args[2])
-                msg = f'Successfully added assignment **{args[1]}** to the **{args[0]}** spreadsheet, due **{args[2]}**'
-            except Exception as e:
-                await ctx.send(e)
+            # try:
+            sheets.add_assignment(info["SPREAD_ID"], args[1], args[2])
+            msg = f'Successfully added assignment **{args[1]}** to the **{args[0]}** spreadsheet, due **{args[2]}**'
+            # except Exception as e:
+            #     await ctx.send(e)
+            #     return
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
         await ctx.send(msg)
