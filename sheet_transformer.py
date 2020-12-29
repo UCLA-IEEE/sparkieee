@@ -3,7 +3,6 @@ import calendar
 import os.path
 import pickle
 from creds import *
-from datetime import datetime
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -31,7 +30,6 @@ class SheetTransformer:
         self.service = build('sheets', 'v4', credentials=creds).spreadsheets()
         print('Sheet Transformer built successfully using token.pickle')
 
-    # todo: add lookback period parameter
     def lookup(self, spread_id, name=None, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()
         sheet = spread_info.get('sheets')[sheet_index]

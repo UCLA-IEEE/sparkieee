@@ -2,7 +2,7 @@ import asyncio
 import discord
 import pytz
 from creds import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from discord.ext import commands, tasks
 from sheet_transformer import SheetTransformer
 
@@ -11,6 +11,7 @@ client = commands.Bot(command_prefix='.', help_command=None)
 
 @client.event
 async def on_ready():
+    await client.change_presence(activity=discord.Game(name=f'what is love? 🤖 | {client.command_prefix}help'))
     print(f'SparkIEEE has logged in as {client.user}')
 
 @client.command()
@@ -262,14 +263,14 @@ async def before():
     date = datetime.today()
     future = datetime(date.year, date.month, date.day, LAB_HOURS_START_TIME, 0) # Lab Hours start at 10 am
     if date.hour >= LAB_HOURS_START_TIME:
-        future += datetime.timedelta(days=1)
+        future += timedelta(days=1)
     wait_period = (future - date).total_seconds()
-    print(f'Waiting for {wait_period} seconds before starting lab hour reminders.')
+    print(f'Waiting until {future} before starting lab hour reminders.')
     await asyncio.sleep(wait_period)
     print("Beginning Lab Hours scheduled reminders")
     lab_channel = client.get_channel(LAB_CHANNEL_ID)
     if lab_channel and lab_open:
-        await lab_channel.send('Lab Hours have begun!')
+        await lab_channel.send('Good Morning! Lab Hours have begun!')
 
 sheets = SheetTransformer()
 lab_hours_reminder.start()
