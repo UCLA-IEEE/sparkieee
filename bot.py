@@ -319,6 +319,7 @@ async def lab_hours_reminder():
 async def before():
     await client.wait_until_ready()
     date = datetime.today()
+    date = date.astimezone(pytz.timezone('US/Pacific'))
     future = datetime(date.year, date.month, date.day, LAB_HOURS_START_TIME, 0) # Lab Hours start at 10 am
     if date.hour >= LAB_HOURS_START_TIME:
         future += timedelta(days=1)
