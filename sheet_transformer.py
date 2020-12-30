@@ -87,7 +87,7 @@ class SheetTransformer:
         assignment_col = None
         for col, a in enumerate(values[0]):
             if a.upper().strip() == assignment.upper().strip():
-                if col < len(values[member_row]):
+                if col < len(values[member_row - 1]):
                     old_val = values[member_row - 1][col]
                 assignment_col = self.column_to_letter(col + 1)
                 break
@@ -107,6 +107,7 @@ class SheetTransformer:
     def add_assignment(self, spread_id, assignment, deadline, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()
         sheet = spread_info.get('sheets')[sheet_index]
+        sheet_id = sheet.get('properties').get('sheetId')
         title = sheet.get('properties').get('title')
 
         result = self.service.values().get(spreadsheetId=spread_id,
@@ -133,14 +134,14 @@ class SheetTransformer:
 
         # Add pretty formatting (colors/number formatting)
         percent_range = {
-            'sheetId': 0,
+            'sheetId': sheet_id,
             'startRowIndex': PERCENT_ROW_INDEX,
             'endRowIndex': PERCENT_ROW_INDEX + 1,
             'startColumnIndex': new_col_index,
             'endColumnIndex': new_col_index + 1,
         }
         checkoff_range = {
-            'sheetId': 0,
+            'sheetId': sheet_id,
             'startRowIndex': HEADER_ROWS,
             'endRowIndex': HEADER_ROWS + n_members,
             'startColumnIndex': new_col_index,
@@ -269,7 +270,10 @@ class SheetTransformer:
                                            range=f'{title}').execute()
         values = result.get('values')
 
-        hour = str(time.hour % 12) + 'pm' if time.hour / 12 else 'am'
+        h = time.hour if time.hour < 12 else time.hour % 12
+        if h == 0:
+            h = 12
+        hour = f'{h}am' if time.hour < 12 else f'{h}pm'
         day_of_week = calendar.day_name[time.weekday()]
 
         shift_str = ''

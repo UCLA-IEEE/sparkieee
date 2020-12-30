@@ -8,6 +8,7 @@ from sheet_transformer import SheetTransformer
 
 lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
+labhour_msg = None
 
 # If the message already exists, no need to create it again
 async def join_roles_announcement():
@@ -203,8 +204,7 @@ async def labhours(ctx, *args):
 async def checkoff(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
-            f'For example, `{client.command_prefix}checkoff Aircopter "Jay Park" "Lab 1"` or ' \
-            f'`{client.command_prefix}checkoff DAV "Fred Chu" "Deposit"`.'
+            f'For example, `{client.command_prefix}checkoff Aircopter "Lab 1" "Jay Park"`.'
         await ctx.send(err_msg)
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
@@ -216,15 +216,15 @@ async def checkoff(ctx, *args):
         new_val = 'x' if len(args) < 4 else args[3]
         msg = ''
         if 'SPREAD_ID' in info:
-            try:
-                old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=args[2], val=new_val)
-                if old_val == 'x':
-                    msg = f'**{args[2]}** has already been checked off for **{args[0]} {args[1]}**.\n'
-                else:
-                    msg = f'**{args[2]}** has been checked off for **{args[0]} {args[1]}**!\n' \
-                          f'```Value changed from "{old_val}" to "{new_val}"```'
-            except Exception as e:
-                await ctx.send(e)
+            # try:
+            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=args[2], val=new_val)
+            if old_val == 'x':
+                msg = f'**{args[2]}** has already been checked off for **{args[0]} {args[1]}**.\n'
+            else:
+                msg = f'**{args[2]}** has been checked off for **{args[0]} {args[1]}**!\n' \
+                      f'```Value changed from "{old_val}" to "{new_val}"```'
+            # except Exception as e:
+            #     await ctx.send(e)
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
         await ctx.send(msg)
@@ -245,12 +245,12 @@ async def addassign(ctx, *args):
         info = PROJECTS[args[0].upper()]
         msg = ''
         if 'SPREAD_ID' in info:
-            # try:
-            sheets.add_assignment(info["SPREAD_ID"], args[1], args[2])
-            msg = f'Successfully added assignment **{args[1]}** to the **{args[0]}** spreadsheet, due **{args[2]}**'
-            # except Exception as e:
-            #     await ctx.send(e)
-            #     return
+            try:
+                sheets.add_assignment(info["SPREAD_ID"], args[1], args[2])
+                msg = f'Successfully added assignment **{args[1]}** to the **{args[0]}** spreadsheet, due **{args[2]}**'
+            except Exception as e:
+                await ctx.send(e)
+                return
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
         await ctx.send(msg)
@@ -288,7 +288,6 @@ async def closelab(ctx):
     await ctx.send(f'The lab is now closed. Lab Hours reminders will cease until '
              f'the `{client.command_prefix}openlab` command is used to reopen it.')
 
-
 @client.command()
 @commands.has_role("officers")
 async def openlab(ctx):
@@ -296,40 +295,48 @@ async def openlab(ctx):
     lab_open = True
     await ctx.send(f'The lab is now reopened. Lab Hours reminders will restart tomorrow.')
 
-@tasks.loop(hours=1, count=9)
+@tasks.loop(hours=1)
 async def lab_hours_reminder():
+    global labhour_msg
     date = datetime.now(tz=pytz.utc)
     date = date.astimezone(pytz.timezone('US/Pacific'))
     if not lab_open or date.weekday() >= 5:  # weekend
         return
+    if date.hour < 10 or date.hour > 19:
+        return
     try:
+        if labhour_msg:
+            await labhour_msg.delete()
         if date.hour == 18:
             msg = f'Lab Hours have officially ended. For a full list of lab hours, visit http://ieeebruins.com/lab.'
         else:
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
+            if not officers:
+                officers = 'None'
             msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
                   f'```{officers}```'
         lab_channel = client.get_channel(LAB_CHANNEL_ID)
         if lab_channel:
-            await lab_channel.send(msg)
+            labhour_msg = await lab_channel.send(msg)
     except Exception as e:
         print(e)
 
 @lab_hours_reminder.before_loop
 async def before():
     await client.wait_until_ready()
-    date = datetime.today()
-    future = datetime(date.year, date.month, date.day, LAB_HOURS_START_TIME, 0) # Lab Hours start at 10 am
-    if date.hour >= LAB_HOURS_START_TIME:
+    date = datetime.now(tz=pytz.utc)
+    date = date.astimezone(pytz.timezone('US/Pacific'))
+    if date.hour == 23:
+        future = pytz.timezone('US/Pacific').localize(datetime(date.year, date.month, date.day, LAB_HOURS_START_TIME, 0))
         future += timedelta(days=1)
+    else:
+        future = pytz.timezone('US/Pacific').localize(datetime(date.year, date.month, date.day, date.hour + 1, 0))
     wait_period = (future - date).total_seconds()
-    print(f'Waiting until {future} before starting lab hour reminders.')
+    print(f'Waiting until {future} before starting lab hour reminders ({wait_period} seconds).')
     await asyncio.sleep(wait_period)
     print("Beginning Lab Hours scheduled reminders")
-    lab_channel = client.get_channel(LAB_CHANNEL_ID)
-    if lab_channel and lab_open:
-        await lab_channel.send('Good Morning! Lab Hours have begun!')
 
 sheets = SheetTransformer()
 lab_hours_reminder.start()
 client.run(BOT_TOKEN)
+

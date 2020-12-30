@@ -1,4 +1,4 @@
-BOT_TOKEN = 'NzkxNDY5OTQ1MTM3NTI4ODM0.X-Pn0w.1iq-jAfvQA7outbY0-YgEzLBJrI'
+BOT_TOKEN = 'INSERT BOT KEY HERE'
 LAB_CHANNEL_ID = 724325916154658867
 
 PROJECTS = {
@@ -17,6 +17,7 @@ PROJECTS = {
             'Tyler Price': 'tyler.4p#7755'
         },
         'FB_GROUP': 'https://www.facebook.com/groups/910014872738486',
+        'SPREAD_ID': '1keqQdjEdb9efmIOeeiWlTcpvCrLCxQy3B5O6uwUy1os'
     },
 
     'AIRCOPTER': {
@@ -24,7 +25,8 @@ PROJECTS = {
             'Aaron Kuo': 'arno_aaron#3936',
             'Eric Tang': 'Eric Tang#5218'
         },
-        'FB_GROUP': 'https://www.facebook.com/groups/aircopter'
+        'FB_GROUP': 'https://www.facebook.com/groups/aircopter',
+        'SPREAD_ID': '1eSxjNyX9znHYA2qRW5Oxiwf9v6Wck5YHYZmYRU_WjaE'
     },
 
     'DAV': {
@@ -32,7 +34,8 @@ PROJECTS = {
             'Brandon Le': 'Brandon Le#2216',
             'David Kao': 'uh oh its david#7756'
         },
-        'FB_GROUP': 'https://www.facebook.com/groups/673094760079791'
+        'FB_GROUP': 'https://www.facebook.com/groups/673094760079791',
+        'SPREAD_ID': '1hdYvslAb1XKKFe767ztQMwTqxGLdmYhpwUtmbyVRA0s'
     },
 
     'WRAP': {
