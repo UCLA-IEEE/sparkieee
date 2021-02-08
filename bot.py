@@ -10,6 +10,10 @@ lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
 labhour_msg = None
 
+# Colors for embeds
+color = 0xffbb00
+error_color = 0xff0000
+
 # If the message already exists, no need to create it again
 async def join_roles_announcement():
     text = "React to this message with your project's emoji to be assigned that role! Unreact to reverse it.\n" \
@@ -73,44 +77,50 @@ async def on_raw_reaction_remove(payload):
 
 @client.command()
 async def help(ctx):
-    msg = 'Hello! I am **SparkIEEE**, an IEEE Discord bot created by Bryan Wong. \n' \
-         f'To run a command, type in `{client.command_prefix}[command]`.\n' \
-         f'For fields with multiple words (e.g. names), use quotation marks `""`\n\n' \
-         f'**Commands:** \n' \
-          '```projects             directory of current active projects\n\n' \
-          'project p            lookup project deadlines, contact info, links, and more\n\n' \
-          'status p u           lookup project completion status of member u in project p\n\n' \
-          'labhours             whose lab hours is it right now?\n\n' \
-          'labhours o           lookup lab hours for officer o\n```\n' \
-          '**Project Lead Commands:**\n' \
-          '```checkoff p a u [v]   checkoff user u for project p, assignment a\n' \
-          '                     v is the new value, by default it\'s "x"\n' \
-         f'                     to add notes, {client.command_prefix}checkoff p a u "checkpoint 1"\n\n' \
-          'addassign p a d      add assignment a, due on date d, to project p\n\n' \
-          'extend p a d         change project p\'s assignment a deadline to d\n\n' \
-          'closelab             disable lab hours reminders for the day\n\n' \
-          'openlab              reenable lab hours reminders, starting tomorrow```\n' \
-          '**Links:**\n'
+    prefix = client.command_prefix
+    description = 'Hello! I am **SparkIEEE**, an IEEE Discord bot created by Bryan Wong. \n' \
+         f'To run a command, type in `{prefix}[command]`.\n' \
+         f'For fields with multiple words (e.g. names), use quotation marks `""`\n\n'
+    # Make new embed with description
+    embed = discord.Embed(title='Help', description=description, color=color)
 
-    # todo: add image urls/descriptions
-    ieee_website = discord.Embed(title='IEEE at UCLA Website',
-                              url='https://ieeebruins.com/')
-    ieee_linktree = discord.Embed(title='IEEE Linktree',
-                                 url='https://linktr.ee/uclaieee')
-    github = discord.Embed(title='SparkIEEE on Github',
-                              url='https://github.com/bryanjwong/sparkieee')
+    commands_msg = f'```js\n\n' \
+        f'[1] projects - Directory of current active projects\n' \
+        f'[2] project p - Deadlines, contact info, links, and more for project p\n' \
+        f'[3] status p u - Project completion status in project p for member u\n' \
+        f'[4] labhours - Check whose lab hours it is right now\n' \
+        f'[5] labhours o - Look up lab hours for officer o\n```'
+    # Add commands as new field to embed
+    embed.add_field(name='Commands', value=commands_msg, inline=False)
 
-    await ctx.send(msg)
-    await ctx.send(embed=ieee_website)
-    await ctx.send(embed=ieee_linktree)
-    await ctx.send(embed=github)
+    project_leads_msg = f'```js\n\n' \
+        f'[1] checkoff p a u [v] - Check off user u for project p, assignment a. v is the new value; the default value is "x".\n' \
+        f'To add notes, {prefix}checkoff p a u "checkpoint 1"\n' \
+        f'[2] addassign p a d - Add assignment a, due on date d, to project p\n' \
+        f'[3] extend p a d - Change deadline to d for assignment a in project p\n' \
+        f'[4] closelab - Disable lab hours reminders for the day\n' \
+        f'[5] openlab - Reenable lab hours reminders, starting tomorrow```\n'
+    
+    # Only show these commands when executed by an officer!
+    if is_officer(ctx):
+        # Add project leads commands field to the embed
+       embed.add_field(name='Project Lead Commands', value=project_leads_msg, inline=False)
+    
+    # Can turn this into a 2nd embed if you want thumbnails
+    embed.add_field(name='IEEE at UCLA Website', value='[Website](https://ieeebruins.com/)', inline=True)
+    embed.add_field(name='IEEE Linktree', value='[Linktree](https://linktr.ee/uclaieee)', inline=True)
+    embed.add_field(name='SparkIEEE on Github', value='[Github](https://github.com/bryanjwong/sparkieee)', inline=True)
+
+    await ctx.send(embed=embed)
+
 
 @client.command()
 async def projects(ctx):
     msg = 'Here is a list of our currently active projects:\n' \
-          f'```{list(PROJECTS.keys())}```\n' \
+          f'```\n{fmt_projects()}```\n' \
           f'For more info about a particular project, use the `{client.command_prefix}project project_name` command.'
-    await ctx.send(msg)
+    embed = discord.Embed(title='Projects', description=msg, color=color)
+    await ctx.send(embed=embed)
 
 @client.command()
 async def project(ctx, *args):
@@ -121,28 +131,29 @@ async def project(ctx, *args):
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
                   'Here is a list of our currently active projects:\n' \
-                  f'```{list(PROJECTS.keys())}```\n'
+                  f'```{fmt_projects()}```\n'
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
         projects = ''
         if 'SPREAD_ID' in info:
             try:
-                projects = f'**{args[0]} Projects:**'\
-                           f'```{sheets.lookup(info["SPREAD_ID"])}```'
+                projects = f'```\n{sheets.lookup(info["SPREAD_ID"])}```'
             except Exception as e:
                 await ctx.send(e)
         nl = '\n- '
         leads = '\n'.join([f'{name}: @{id}\n'
                            f'- {nl.join(sheets.get_lab_hours_by_name(LAB_HOURS, name))}\n'
                            for name, id in info['LEADS'].items()])
-        msg = f'{projects}\n' \
-              f'**{args[0]} Project Leads:**\n' \
-              f'```{leads}```\n' \
-              f'**{args[0]} Links:**'
-        e = discord.Embed(title=f'{args[0]} Facebook Group',
-                          url=f'{info["FB_GROUP"]}')
-        await ctx.send(msg, embed=e)
+
+        # Embed for a specific project
+        embed = discord.Embed(title=f'{args[0]} Information', description=PROJECTS[args[0].upper()]["FULL_NAME"], color=color)
+        if 'SPREAD_ID' in info:
+            embed.add_field(name=f'{args[0]} Projects:', value=f'{projects}', inline=False)
+        embed.add_field(name=f'{args[0]} Project Leads:', value=f'```{leads}```', inline=False)
+        embed.add_field(name='Links', value=f'[{args[0]} Facebook Group]({info["FB_GROUP"]})', inline=False)
+    
+        await ctx.send(embed=embed)
 
 @client.command()
 async def status(ctx, *args):
@@ -154,25 +165,27 @@ async def status(ctx, *args):
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
             'Here is a list of our currently active projects:\n' \
-            f'```{list(PROJECTS.keys())}```\n'
+            f'```{fmt_projects()}```\n'
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
         if 'SPREAD_ID' in info:
             try:
-                msg = f'**{args[1]}\'s {args[0]} Project Status:**' \
-                    f'```{sheets.lookup(info["SPREAD_ID"], name=args[1])}```'
+                title = f'**{args[1]}\'s {args[0].upper()} Project Status:**'
+                description = f'```\n{sheets.lookup(info["SPREAD_ID"], name=args[1])}```'
+                embed = discord.Embed(title=title, description=description, color=color)
+                await ctx.send(embed=embed)
             except Exception as e:
                 await ctx.send(e)
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
-        await ctx.send(msg)
+            await ctx.send(msg)
 
 @client.command()
 async def labhours(ctx, *args):
     if len(args) == 0:
         if not lab_open:
-            await ctx.send('The Lab is closed today. For a full list of lab hours, visit http://ieeebruins.com/lab.')
+            await ctx.send('The Lab is closed today. For a full list of lab hours, visit our [lab website](http://ieeebruins.com/lab).')
             return
         try:
             date = datetime.now(tz=pytz.utc)
@@ -180,7 +193,13 @@ async def labhours(ctx, *args):
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
             msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
                   f'```{officers}```'
-            await ctx.send(msg)
+
+            # Lab hours embed for all officers
+            title = f"Lab Hours for {shift_str}"
+            description = f'```{officers}```'
+            embed = discord.Embed(title=title, description=description, color=color)
+            
+            await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(e)
     else:
@@ -188,14 +207,19 @@ async def labhours(ctx, *args):
             # This command is buggy when multiple officers with same first name.
             #     Ex: labhours David returns lab hours of BOTH Davids
             hours = sheets.get_lab_hours_by_name(LAB_HOURS, args[0])
-            if hours:
+            if not is_sheet_label(args[0]) and hours:
                 hours_string = '\n'.join(hours)
-                msg = f'Here are **{args[0]}**\'s Lab Hours:\n' \
-                      f'```{hours_string}```'
+
+                # Lab hours embed for an officer
+                title = f"{args[0]}'s Lab Hours"
+                description = f'```{hours_string}```'
+                embed = discord.Embed(title=title, description=description, color=color)
+
+                await ctx.send(embed=embed)
             else:
                 msg = f'**{args[0]}** is either not an officer or does not have lab hours.\n' \
-                      'A full list of lab hours can be found at http://ieeebruins.com/lab'
-            await ctx.send(msg)
+                      'A full list of lab hours can be found at our [lab website](http://ieeebruins.com/lab).'
+                await ctx.send(msg)
         except Exception as e:
             await ctx.send(e)
 
@@ -209,7 +233,7 @@ async def checkoff(ctx, *args):
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
             'Here is a list of our currently active projects:\n' \
-            f'```{list(PROJECTS.keys())}```\n'
+            f'```{fmt_projects()}```\n'
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
@@ -239,7 +263,7 @@ async def addassign(ctx, *args):
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
             'Here is a list of our currently active projects:\n' \
-            f'```{list(PROJECTS.keys())}```\n'
+            f'```{fmt_projects()}```\n'
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
@@ -265,7 +289,7 @@ async def extend(ctx, *args):
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
             'Here is a list of our currently active projects:\n' \
-            f'```{list(PROJECTS.keys())}```\n'
+            f'```{fmt_projects()}```\n'
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
@@ -336,7 +360,48 @@ async def before():
     await asyncio.sleep(wait_period)
     print("Beginning Lab Hours scheduled reminders")
 
+
+# Helper functions added by Raj
+
+# Simple error embed
+def error_embed(msg):
+    return discord.Embed(title='Error', description=msg, color=error_color)
+
+# Better formatting for .projects
+def fmt_projects():
+  res = ''
+  for project_name in PROJECTS.keys():
+    # If it's 4 letters or less, we assume it's an abbreviation
+    if len(project_name) < 5:
+      res += project_name
+    else:
+      res += project_name.lower().capitalize()
+    # Separate each entry w/ newline
+    res += '\n'
+  return res.strip()
+
+# Capitalize each line on a new line
+def capitalize_on_separator(some_str, separator):
+    # Split at each newline to turn the string into a list
+    some_list = some_str.split(separator)
+    # Capitalize each line, turn map into a list           
+    some_list = list(map(lambda line: line.capitalize(), some_list))
+    # Turn the list into a string separated by the separator
+
+    return separator.join(some_list)
+
+# Prevents bug with detecting row numbers or column labels as a name
+def is_sheet_label(some_str):
+    return len(some_str.strip()) < 2
+
+# Check if user has officer role
+# Needed for checking inside of a function
+def is_officer(ctx):
+    role_names = [role.name for role in ctx.message.author.roles]
+    if 'officers' in role_names:
+        return True
+    return False
+
 sheets = SheetTransformer()
 lab_hours_reminder.start()
 client.run(BOT_TOKEN)
-
