@@ -160,7 +160,7 @@ async def status(ctx, *args):
     if len(args) < 2:
         err_msg = 'Please supply the command with project and member name arguments.\n' \
             f'For example, `{client.command_prefix}status OPS "Kathy Daniels"` or ' \
-            f'`{client.command_prefix}status Micromouse "Justin Jianto"`.'
+            f'`{client.command_prefix}status Micromouse 1`.'
         await ctx.send(err_msg)
     elif args[0].upper() not in PROJECTS.keys():
         err_msg = f'`{args[0]}` is not a valid project.\n' \
@@ -185,7 +185,7 @@ async def status(ctx, *args):
 async def labhours(ctx, *args):
     if len(args) == 0:
         if not lab_open:
-            await ctx.send('The Lab is closed today. For a full list of lab hours, visit our [lab website](http://ieeebruins.com/lab).')
+            await ctx.send('The Lab is closed today. For a full list of lab hours, visit our lab website http://ieeebruins.com/lab.')
             return
         try:
             date = datetime.now(tz=pytz.utc)
@@ -218,7 +218,7 @@ async def labhours(ctx, *args):
                 await ctx.send(embed=embed)
             else:
                 msg = f'**{args[0]}** is either not an officer or does not have lab hours.\n' \
-                      'A full list of lab hours can be found at our [lab website](http://ieeebruins.com/lab).'
+                      'A full list of lab hours can be found at our lab website http://ieeebruins.com/lab.'
                 await ctx.send(msg)
         except Exception as e:
             await ctx.send(e)
