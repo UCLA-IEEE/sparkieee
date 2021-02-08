@@ -1,8 +1,9 @@
-BOT_TOKEN = 'INSERT BOT KEY HERE'
+BOT_TOKEN = 'Your token here!'
 LAB_CHANNEL_ID = 724325916154658867
 
 PROJECTS = {
     'OPS': {
+        'FULL_NAME': 'Open Project Space',
         'LEADS': {
             'Ryeder Geyer': 'OPS#4995',
             'Taylor Chung': 'taylor#9605'
@@ -12,6 +13,7 @@ PROJECTS = {
     },
 
     'MICROMOUSE': {
+        'FULL_NAME': 'Micromouse',
         'LEADS': {
             'Bradley Schulz': 'bschulz#0605',
             'Tyler Price': 'tyler.4p#7755'
@@ -21,6 +23,7 @@ PROJECTS = {
     },
 
     'AIRCOPTER': {
+        'FULL_NAME': 'Aircopter',
         'LEADS': {
             'Aaron Kuo': 'arno_aaron#3936',
             'Eric Tang': 'Eric Tang#5218'
@@ -30,6 +33,7 @@ PROJECTS = {
     },
 
     'DAV': {
+        'FULL_NAME': 'Digital Audio Visualizer',
         'LEADS': {
             'Brandon Le': 'Brandon Le#2216',
             'David Kao': 'uh oh its david#7756'
@@ -39,6 +43,7 @@ PROJECTS = {
     },
 
     'WRAP': {
+        'FULL_NAME': 'Wireless, RF, and Analog Project',
         'LEADS': {
             'David Baum': 'davidbaum#3617'
         },
@@ -46,6 +51,7 @@ PROJECTS = {
     },
 
     'WORKSHOPS': {
+        'FULL_NAME': 'Workshops',
         'LEADS': {
             'Jackie Lam': 'kittyslayer#4665',
             'Travis Graening': 'Travis Graening#7344'
