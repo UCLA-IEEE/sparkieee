@@ -84,7 +84,7 @@ async def help(ctx):
     # Make new embed with description
     embed = discord.Embed(title='Help', description=description, color=color)
 
-    commands_msg = f'```js\n\n' \
+    commands_msg = f'```ahk\n\n' \
         f'[1] projects - Directory of current active projects\n' \
         f'[2] project p - Deadlines, contact info, links, and more for project p\n' \
         f'[3] status p u - Project completion status in project p for member u\n' \
@@ -93,7 +93,7 @@ async def help(ctx):
     # Add commands as new field to embed
     embed.add_field(name='Commands', value=commands_msg, inline=False)
 
-    project_leads_msg = f'```js\n\n' \
+    project_leads_msg = f'```ahk\n\n' \
         f'[1] checkoff p a u [v] - Check off user u for project p, assignment a. v is the new value; the default value is "x".\n' \
         f'To add notes, {prefix}checkoff p a u "checkpoint 1"\n' \
         f'[2] addassign p a d - Add assignment a, due on date d, to project p\n' \
@@ -107,7 +107,7 @@ async def help(ctx):
        embed.add_field(name='Project Lead Commands', value=project_leads_msg, inline=False)
     
     # Can turn this into a 2nd embed if you want thumbnails
-    embed.add_field(name='IEEE at UCLA Website', value='[Website](https://ieeebruins.com/)', inline=True)
+    embed.add_field(name='IEEE at UCLA Website', value='[Website](http://ieeebruins.com/)', inline=True)
     embed.add_field(name='IEEE Linktree', value='[Linktree](https://linktr.ee/uclaieee)', inline=True)
     embed.add_field(name='SparkIEEE on Github', value='[Github](https://github.com/bryanjwong/sparkieee)', inline=True)
 
@@ -146,6 +146,10 @@ async def project(ctx, *args):
                            f'- {nl.join(sheets.get_lab_hours_by_name(LAB_HOURS, name))}\n'
                            for name, id in info['LEADS'].items()])
 
+        project_full_name = PROJECTS[args[0].upper()]["FULL_NAME"]
+        # Only show the full name of the project if it's not an abbreviation
+        description = project_full_name if args[0].upper() != project_full_name else '' 
+
         # Embed for a specific project
         embed = discord.Embed(title=f'{args[0]} Information', description=PROJECTS[args[0].upper()]["FULL_NAME"], color=color)
         if 'SPREAD_ID' in info:
@@ -162,17 +166,19 @@ async def status(ctx, *args):
             f'For example, `{client.command_prefix}status OPS "Kathy Daniels"` or ' \
             f'`{client.command_prefix}status Micromouse 1`.'
         await ctx.send(err_msg)
-    elif args[0].upper() not in PROJECTS.keys():
-        err_msg = f'`{args[0]}` is not a valid project.\n' \
-            'Here is a list of our currently active projects:\n' \
-            f'```{fmt_projects()}```\n'
+    elif is_invalid_name(args[1]) or args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}`` is not a valid project.\n'
         await ctx.send(err_msg)
+        await projects(ctx)
     else:
         info = PROJECTS[args[0].upper()]
         if 'SPREAD_ID' in info:
             try:
-                title = f'**{args[1]}\'s {args[0].upper()} Project Status:**'
-                description = f'```\n{sheets.lookup(info["SPREAD_ID"], name=args[1])}```'
+                # Turn everything starting from the 1st argument into a string
+                name = get_name_from_args(args[1:])
+
+                title = f'**{name}\'s {args[0].upper()} Project Status:**'
+                description = f'```\n{sheets.lookup(info["SPREAD_ID"], name=name)}```'
                 embed = discord.Embed(title=title, description=description, color=color)
                 await ctx.send(embed=embed)
             except Exception as e:
@@ -191,8 +197,8 @@ async def labhours(ctx, *args):
             date = datetime.now(tz=pytz.utc)
             date = date.astimezone(pytz.timezone('US/Pacific'))
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
-            msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
-                  f'```{officers}```'
+            # msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
+            #       f'```{officers}```'
 
             # Lab hours embed for all officers
             title = f"Lab Hours for {shift_str}"
@@ -207,7 +213,7 @@ async def labhours(ctx, *args):
             # This command is buggy when multiple officers with same first name.
             #     Ex: labhours David returns lab hours of BOTH Davids
             hours = sheets.get_lab_hours_by_name(LAB_HOURS, args[0])
-            if not is_sheet_label(args[0]) and hours:
+            if not is_invalid_name(args[0]) and hours:
                 hours_string = '\n'.join(hours)
 
                 # Lab hours embed for an officer
@@ -241,17 +247,31 @@ async def checkoff(ctx, *args):
         msg = ''
         if 'SPREAD_ID' in info:
             # try:
-            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=args[2], val=new_val)
+            # All arguments including the third arg and after are counted as the name
+            name = get_name_from_args(args[2:])
+            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
             if old_val == 'x':
-                msg = f'**{args[2]}** has already been checked off for **{args[0]} {args[1]}**.\n'
+                msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
             else:
-                msg = f'**{args[2]}** has been checked off for **{args[0]} {args[1]}**!\n' \
+                # Successful check off embed
+                title = f"Checked off {name}"
+                description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
                       f'```Value changed from "{old_val}" to "{new_val}"```'
+                embed = discord.Embed(title=title, description=description, color=color)
+                
+                # Set msg variable to be the embed
+                msg = embed
+
             # except Exception as e:
             #     await ctx.send(e)
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
-        await ctx.send(msg)
+        
+        # Check if it's a string or embed
+        if (type(msg) is str):
+            await ctx.send(msg)
+        else:
+            await ctx.send(embed=embed)
 
 @client.command()
 @commands.has_role("officers")
@@ -324,6 +344,7 @@ async def lab_hours_reminder():
     global labhour_msg
     date = datetime.now(tz=pytz.utc)
     date = date.astimezone(pytz.timezone('US/Pacific'))
+
     if not lab_open or date.weekday() >= 5:  # weekend
         return
     if date.hour < 10 or date.hour > 19:
@@ -337,11 +358,21 @@ async def lab_hours_reminder():
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
             if not officers:
                 officers = 'None'
-            msg = f'These officers have Lab Hours for **{shift_str}**:\n' \
-                  f'```{officers}```'
+            # Lab hours embed for all officers
+            title = f"Lab Hours for {shift_str}"
+            description = f'```{officers}```'
+            embed = discord.Embed(title=title, description=description, color=color)
+
+            # Somewhat confusing, but the message to be displayed is set to the embed
+            msg = embed
+
         lab_channel = client.get_channel(LAB_CHANNEL_ID)
         if lab_channel:
-            labhour_msg = await lab_channel.send(msg)
+            # Check if it's a rich embed or not
+            if type(msg) is str:
+                labhour_msg = await lab_channel.send(msg)
+            else:
+                labhour_msg = await lab_channel.send(embed=msg)
     except Exception as e:
         print(e)
 
@@ -350,6 +381,7 @@ async def before():
     await client.wait_until_ready()
     date = datetime.now(tz=pytz.utc)
     date = date.astimezone(pytz.timezone('US/Pacific'))
+
     if date.hour == 23:
         future = pytz.timezone('US/Pacific').localize(datetime(date.year, date.month, date.day, LAB_HOURS_START_TIME, 0))
         future += timedelta(days=1)
@@ -391,7 +423,8 @@ def capitalize_on_separator(some_str, separator):
     return separator.join(some_list)
 
 # Prevents bug with detecting row numbers or column labels as a name
-def is_sheet_label(some_str):
+# If it's 2 characters or smaller it's illegal
+def is_invalid_name(some_str):
     return len(some_str.strip()) < 2
 
 # Check if user has officer role
@@ -401,6 +434,15 @@ def is_officer(ctx):
     if 'officers' in role_names:
         return True
     return False
+
+# TO-DO: Come up with a better name for this function?
+# If we do .status OPS Joe Schmoe, this just captures Joe Schmoe as its own string
+# No need to use quotes anymore with this
+def get_name_from_args(args):
+    name = ''
+    for i in range(0, len(args)):
+        name += " " + args[i]
+    return name.strip()
 
 sheets = SheetTransformer()
 lab_hours_reminder.start()
