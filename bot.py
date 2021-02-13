@@ -350,6 +350,7 @@ async def lab_hours_reminder():
         return
     if date.hour < 10 or date.hour > 19:
         return
+
     try:
         if labhour_msg:
             await labhour_msg.delete()
@@ -369,7 +370,7 @@ async def lab_hours_reminder():
 
         lab_channel = client.get_channel(LAB_CHANNEL_ID)
         if lab_channel:
-            # Check if it's a rich embed or not
+            # Send differently if plaintext or rich embed
             if type(msg) is str:
                 labhour_msg = await lab_channel.send(msg)
             else:
