@@ -147,11 +147,12 @@ async def project(ctx, *args):
                            for name, id in info['LEADS'].items()])
 
         project_full_name = PROJECTS[args[0].upper()]["FULL_NAME"]
+        
         # Only show the full name of the project if it's not an abbreviation
-        description = project_full_name if args[0].upper() != project_full_name else '' 
+        description = project_full_name if args[0].upper() != project_full_name.upper() else '' 
 
         # Embed for a specific project
-        embed = discord.Embed(title=f'{args[0]} Information', description=PROJECTS[args[0].upper()]["FULL_NAME"], color=color)
+        embed = discord.Embed(title=f'{args[0]} Information', description=description, color=color)
         if 'SPREAD_ID' in info:
             embed.add_field(name=f'{args[0]} Projects:', value=f'{projects}', inline=False)
         embed.add_field(name=f'{args[0]} Project Leads:', value=f'```{leads}```', inline=False)
@@ -167,7 +168,7 @@ async def status(ctx, *args):
             f'`{client.command_prefix}status Micromouse 1`.'
         await ctx.send(err_msg)
     elif is_invalid_name(args[1]) or args[0].upper() not in PROJECTS.keys():
-        err_msg = f'`{args[0]}`` is not a valid project.\n'
+        err_msg = f'`{args[0]}` is not a valid project.\n'
         await ctx.send(err_msg)
         await projects(ctx)
     else:
