@@ -1,4 +1,4 @@
-BOT_TOKEN = 'Your token here!'
+BOT_TOKEN = 'Your token here'
 LAB_CHANNEL_ID = 724325916154658867
 
 PROJECTS = {
