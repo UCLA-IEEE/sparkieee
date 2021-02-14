@@ -51,3 +51,9 @@ To comply with the bot's checkoff commands, your spreadsheet should have the fol
 7. Run `.checkoff OPS "Project 1" "Lucas Wolter" "completed checkpoint 1"` to write a note for Lucas in the checkoff square instead.
 8. Run `.status OPS "Jay Park"` to get a summary of the Jay's projects completion (or incompletion) status so far.
 9. Run `.extend OPS "Project 1" "11/4/2020"` when you realize it's 1 day before the deadline and only 20% of members have completed the project.
+
+## Acknowledgments
+
+Special thanks to the following contributors:
+
+* [Raj Piskala](https://github.com/RogueArt)

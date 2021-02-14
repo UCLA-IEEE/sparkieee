@@ -79,6 +79,7 @@ async def on_raw_reaction_remove(payload):
 async def help(ctx):
     prefix = client.command_prefix
     description = 'Hello! I am **SparkIEEE**, an IEEE Discord bot created by Bryan Wong. \n' \
+         'Special thanks to the following contributors: Raj Piskala \n' \
          f'To run a command, type in `{prefix}[command]`.\n' \
          f'For fields with multiple words (e.g. names), use quotation marks `""`\n\n'
     # Make new embed with description
