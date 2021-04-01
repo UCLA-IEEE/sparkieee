@@ -314,6 +314,38 @@ class SheetTransformer:
         else:
             return shift_str, values[row][col]
 
+    # get special lab hours by time. default index is 1 (the second sheet)
+    def get_lab_special_by_time(self, spread_id, time, sheet_index=1):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        title = sheet.get('properties').get('title')
+
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}').execute()
+        values = result.get('values')
+
+        h = time.hour if time.hour < 12 else time.hour % 12
+        if h == 0:
+            h = 12
+        hour = f'{h}am' if time.hour < 12 else f'{h}pm'
+        day_of_week = calendar.day_name[time.weekday()]
+
+        shift_str = ''
+        col = None
+        for c, day in enumerate(values[FIRST_LH_ROW_INDEX]):
+            if day_of_week in day:
+                col = c
+                break
+        row = None
+        for r, shift in enumerate(values):
+            if shift and shift[FIRST_LH_COL_INDEX].startswith(hour):
+                row = r
+                break
+        if not col or not row or col >= len(values[row]):
+            return ''
+        else:
+            return values[row][col]
+
     # helper function to convert numerical column to letter column (Google Sheets format)
     def column_to_letter(self, column):
         temp = 0
