@@ -207,7 +207,7 @@ async def labhours(ctx, *args):
             title = f"Lab Hours for {shift_str}"
             description = f'```{officers}```'
             if special_hours:
-                description = description + f'\n**Special Lab Hours!**: {special_hours}'
+                description = description + f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
 
             await ctx.send(embed=embed)
@@ -375,7 +375,7 @@ async def lab_hours_reminder():
             title = f"Lab Hours for {shift_str}"
             description = f'```{officers}```'
             if special_hours:
-                description = description + f'\n**Special Lab Hours!**: {special_hours}'
+                description = description + f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
 
             # Somewhat confusing, but the message to be displayed is set to the embed
