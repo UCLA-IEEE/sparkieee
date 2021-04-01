@@ -268,7 +268,7 @@ class SheetTransformer:
 
         hours = []
         col = FIRST_LH_COL_INDEX + 1
-        while col < len(values[FIRST_LH_ROW_INDEX]):
+        while col < FIRST_LH_COL_INDEX + 1 + NUM_DAYS_IN_TABLE:
             day = values[FIRST_LH_ROW_INDEX][col]
             times = []
             row = FIRST_LH_ROW_INDEX + 1
