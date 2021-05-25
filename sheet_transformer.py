@@ -23,7 +23,7 @@ class SheetTransformer:
                 flow = InstalledAppFlow.from_client_secrets_file(
                     'credentials.json', SCOPES)
                 creds = flow.run_local_server(port=0)
-            # Save the credentials for the next run
+                # Save the credentials for the next run
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)
 
@@ -257,6 +257,8 @@ class SheetTransformer:
                                      }).execute()
         return old_deadline
 
+    # Return - dictionary of strings for each officer matched
+    # E.g. { 'Joe A': 'Monday 3pm-4pm', 'Joe B': 'Monday 4pm-5pm' }
     def get_lab_hours_by_name(self, spread_id, name, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()
         sheet = spread_info.get('sheets')[sheet_index]
@@ -266,21 +268,49 @@ class SheetTransformer:
                                            range=f'{title}').execute()
         values = result.get('values')
 
-        hours = []
+        officer_hours = {} # <-- Store lab hours here
         col = FIRST_LH_COL_INDEX + 1
-        while col < FIRST_LH_COL_INDEX + 1 + NUM_DAYS_IN_TABLE:
+
+        # Column-major traversal of the hours on the spreadsheet
+        while col < FIRST_LH_COL_INDEX + NUM_DAYS_IN_TABLE:
             day = values[FIRST_LH_ROW_INDEX][col]
-            times = []
+            times = [] # <-- Store times for the current day
+
             row = FIRST_LH_ROW_INDEX + 1
             while row < len(values):
                 time = values[row][FIRST_LH_COL_INDEX]
-                if name.upper().strip() in values[row][col].upper().strip():
-                    times.append(time)
-                row = row + 1
-            if times:
-                hours.append(f'{day}: {times[0] if len(times) == 1 else ", ".join(times)}')
-            col = col + 1
-        return hours
+                officer_names = values[row][col].strip().splitlines()
+                
+                # Go through each officer name, see if current name matches any
+                for officer_name in officer_names:
+                    officer_name = officer_name.strip()
+                    if officer_name.upper().startswith(name.upper().strip()):
+                        # If matched name doesn't exist in hours, 
+                        # Add new matched name
+                        if not officer_name in officer_hours:
+                            officer_hours[officer_name] = {}
+
+                        # Track times by each day
+                        if not day in officer_hours[officer_name]:
+                            officer_hours[officer_name][day] = []
+
+                        # If it exists, append the time
+                        officer_hours[officer_name][day].append(time)
+                row += 1
+            col += 1
+
+        # Format hours for each officer
+        for officer in officer_hours:
+            hours_as_str = []
+
+            # Convert the times to a string, push to list
+            for day, times in officer_hours[officer].items():
+                hours_as_str.append(f'{day}: {times[0] if len(times) == 1 else ", ".join(times)}')
+
+            # Convert list to formatted string
+            officer_hours[officer] = '\n'.join(hours_as_str)
+
+        return officer_hours
 
     def get_lab_hours_by_time(self, spread_id, time, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()

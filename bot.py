@@ -142,9 +142,12 @@ async def project(ctx, *args):
                 projects = f'```\n{sheets.lookup(info["SPREAD_ID"])}```'
             except Exception as e:
                 await ctx.send(e)
-        nl = '\n- '
+
+        nl_with_dash = '\n- '
+        nl = '\n'
+        # Use iterator to grab the first (and only) value from the dictionary
         leads = '\n'.join([f'{name}: @{id}\n'
-                           f'- {nl.join(sheets.get_lab_hours_by_name(LAB_HOURS, name))}\n'
+                           f'- {next (iter( sheets.get_lab_hours_by_name(LAB_HOURS, name).values() ) ) .replace(nl, nl_with_dash)}\n'
                            for name, id in info['LEADS'].items()])
 
         project_full_name = PROJECTS[args[0].upper()]["FULL_NAME"]
@@ -215,18 +218,24 @@ async def labhours(ctx, *args):
             await ctx.send(e)
     else:
         try:
-            # This command is buggy when multiple officers with same first name.
-            #     Ex: labhours David returns lab hours of BOTH Davids
             hours = sheets.get_lab_hours_by_name(LAB_HOURS, args[0])
             if not is_invalid_name(args[0]) and hours:
-                hours_string = '\n'.join(hours)
+                # In case anyone abuses this command, replace for loop with this code
+                '''
+                if len(hours) > 1:
+                    title = f"{args[0]}'s Lab Hours"
+                    description = f'Did you mean: ```{", ".join(hours.keys())}```'
+                    embed = discord.Embed(title=title, description=description, color=color)
+                    await ctx.send(embed=embed)             
+                '''
+                
+                for officer_name, hours_string in hours.items():
+                    # Lab hours embed for an officer
+                    title = f"{officer_name}'s Lab Hours"
+                    description = f'```{hours_string}```'
+                    embed = discord.Embed(title=title, description=description, color=color)
 
-                # Lab hours embed for an officer
-                title = f"{args[0]}'s Lab Hours"
-                description = f'```{hours_string}```'
-                embed = discord.Embed(title=title, description=description, color=color)
-
-                await ctx.send(embed=embed)
+                    await ctx.send(embed=embed)
             else:
                 msg = f'**{args[0]}** is either not an officer or does not have lab hours.\n' \
                     'A full list of lab hours can be found at our lab website http://ieeebruins.com/lab.'
