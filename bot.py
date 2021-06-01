@@ -10,6 +10,8 @@ lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
 labhour_msg = None
 
+officer_title = "officers 2021-2022"
+
 # Colors for embeds
 color = 0xffbb00
 error_color = 0xff0000
@@ -245,7 +247,7 @@ async def labhours(ctx, *args):
 
 
 @client.command()
-@commands.has_role("officers")
+@commands.has_role(officer_title)
 async def checkoff(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
@@ -289,7 +291,7 @@ async def checkoff(ctx, *args):
             await ctx.send(embed=embed)
 
 @client.command()
-@commands.has_role("officers")
+@commands.has_role(officer_title)
 async def addassign(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, assignment, and deadline arguments.\n' \
@@ -316,7 +318,7 @@ async def addassign(ctx, *args):
 
 
 @client.command()
-@commands.has_role("officers")
+@commands.has_role(officer_title)
 async def extend(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, assignment, and new deadline arguments.\n' \
@@ -342,7 +344,7 @@ async def extend(ctx, *args):
 
 
 @client.command()
-@commands.has_role("officers")
+@commands.has_role(officer_title)
 async def closelab(ctx):
     global lab_open
     lab_open = False
@@ -351,7 +353,7 @@ async def closelab(ctx):
 
 
 @client.command()
-@commands.has_role("officers")
+@commands.has_role(officer_title)
 async def openlab(ctx):
     global lab_open
     lab_open = True
