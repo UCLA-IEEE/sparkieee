@@ -359,6 +359,31 @@ async def openlab(ctx):
     lab_open = True
     await ctx.send(f'The lab is now reopened. Lab Hours reminders will restart tomorrow.')
 
+@client.command()
+async def torch(ctx):
+    description = 'Hello!'
+    # Make new embed with description
+    embed = discord.Embed(title='UCLA IEEE 2020-2021', color=color)
+
+    embed.add_field(name='President', value='Bryan Wong', inline=True)
+    embed.add_field(name='IVP', value='Kathy Daniels', inline=True)
+    embed.add_field(name='EVP', value='Albert Han, Jay Park', inline=True)
+    embed.add_field(name='Treasurer', value='Erica Xie', inline=True)
+    embed.add_field(name='Corporate Relations', value='Pranav Srinivasan', inline=True)
+    embed.add_field(name='Secretary', value='Achinthya Poduval', inline=True)
+    embed.add_field(name='Publicity', value='Solaine Zhao', inline=True)
+    embed.add_field(name='Events Coordinator', value='Grace Ma', inline=True)
+    embed.add_field(name='Projects and Lab Manager', value='Caleb Terrill, Chester Hulse', inline=True)
+    embed.add_field(name='R&D', value='David Baum', inline=True)
+    embed.add_field(name='Webmaster', value='Robert Peralta', inline=True)
+    embed.add_field(name='Micromouse Lead', value='Bradley Schulz, Tyler Price', inline=True)
+    embed.add_field(name='Aircopter Lead', value='Aaron Kuo, Eric Tang', inline=True)
+    embed.add_field(name='DAV Lead', value='Brandon Le, David Kao', inline=True)
+    embed.add_field(name='Workshops Manager', value='Jackie Lam, Travis Graening', inline=True)
+    embed.add_field(name='OPS Lead', value='Ryeder Geyer, Taylor Chung', inline=True)
+    embed.set_image(url='https://media3.giphy.com/media/E4Xf4Qy3Cd4b97pKoQ/giphy.gif?cid=790b761124a9b3ec6f873d62a688fb6d49f6990e6450b97e&rid=giphy.gif&ct=g')
+
+    await ctx.send(embed=embed)
 
 @tasks.loop(hours=1)
 async def lab_hours_reminder():
