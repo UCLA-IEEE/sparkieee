@@ -1,4 +1,6 @@
-BOT_TOKEN = 'Your bot token here'
+import os
+
+SPARKIEEE_TOKEN = os.getenv("SPARKIEEE_TOKEN")
 LAB_CHANNEL_ID = 724325916154658867
 
 PROJECTS = {

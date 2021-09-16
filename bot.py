@@ -498,4 +498,4 @@ def get_name_from_args(args):
 
 sheets = SheetTransformer()
 lab_hours_reminder.start()
-client.run(BOT_TOKEN)
+client.run(SPARKIEEE_TOKEN)
