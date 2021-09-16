@@ -29,15 +29,28 @@ async def join_roles_announcement():
         await message.add_reaction(emoji=client.get_emoji(DAV_EMOJI))
         await message.add_reaction(emoji=client.get_emoji(WRAP_EMOJI))
 
+async def choose_pronouns_announcement():
+    text = "React to this message to assign yourself your preferred pronouns! Unreact to reverse it.\n" \
+           "React with \U0001F422 for he/him/his\n" \
+           "React with \U0001F419 for she/her/hers\n" \
+           "React with \U0001F42C for they/them\n"
+    role_channel = client.get_channel(ROLE_CHANNEL_ID)
+    if role_channel:
+        message = await role_channel.send(text)
+        await message.add_reaction(emoji='\U0001F422')
+        await message.add_reaction(emoji='\U0001F419')
+        await message.add_reaction(emoji='\U0001F42C')
+
 @client.event
 async def on_ready():
     print(f'SparkIEEE has logged in as {client.user}')
     await client.change_presence(activity=discord.Game(name=f'what is love? 🤖 | {client.command_prefix}help'))
     # await join_roles_announcement()
+    # await choose_pronouns_announcement()
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id != REACT_MSG_ID:
+    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != REACT_MSG_ID:
         return
     member = payload.member
     guild = member.guild
@@ -53,12 +66,18 @@ async def on_raw_reaction_add(payload):
         role = discord.utils.get(guild.roles, name="DAV")
     if payload.emoji == client.get_emoji(WRAP_EMOJI):
         role = discord.utils.get(guild.roles, name="WRAP")
+    if payload.emoji.name == '\U0001F422':
+        role = discord.utils.get(guild.roles, name="he/him/his")
+    if payload.emoji.name == '\U0001F419':
+        role = discord.utils.get(guild.roles, name="she/her/hers")
+    if payload.emoji.name == '\U0001F42C':
+        role = discord.utils.get(guild.roles, name="they/them")
     if role:
         await member.add_roles(role)
 
 @client.event
 async def on_raw_reaction_remove(payload):
-    if payload.message_id != REACT_MSG_ID:
+    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != REACT_MSG_ID:
         return
     guild = await client.fetch_guild(payload.guild_id)
     member = await guild.fetch_member(payload.user_id)
@@ -74,6 +93,12 @@ async def on_raw_reaction_remove(payload):
         role = discord.utils.get(guild.roles, name="DAV")
     if payload.emoji == client.get_emoji(WRAP_EMOJI):
         role = discord.utils.get(guild.roles, name="WRAP")
+    if payload.emoji.name == '\U0001F422':
+        role = discord.utils.get(guild.roles, name="he/him/his")
+    if payload.emoji.name == '\U0001F419':
+        role = discord.utils.get(guild.roles, name="she/her/hers")
+    if payload.emoji.name == '\U0001F42C':
+        role = discord.utils.get(guild.roles, name="they/them")
     if role:
         await member.remove_roles(role)
 
@@ -363,24 +388,26 @@ async def openlab(ctx):
 async def torch(ctx):
     description = 'Hello!'
     # Make new embed with description
-    embed = discord.Embed(title='UCLA IEEE 2020-2021', color=color)
+    embed = discord.Embed(title='UCLA IEEE 2021-2022', color=color)
 
-    embed.add_field(name='President', value='Bryan Wong', inline=True)
-    embed.add_field(name='IVP', value='Kathy Daniels', inline=True)
-    embed.add_field(name='EVP', value='Albert Han, Jay Park', inline=True)
-    embed.add_field(name='Treasurer', value='Erica Xie', inline=True)
-    embed.add_field(name='Corporate Relations', value='Pranav Srinivasan', inline=True)
-    embed.add_field(name='Secretary', value='Achinthya Poduval', inline=True)
-    embed.add_field(name='Publicity', value='Solaine Zhao', inline=True)
-    embed.add_field(name='Events Coordinator', value='Grace Ma', inline=True)
-    embed.add_field(name='Projects and Lab Manager', value='Caleb Terrill, Chester Hulse', inline=True)
-    embed.add_field(name='R&D', value='David Baum', inline=True)
+    embed.add_field(name='President', value='Caleb Terrill', inline=True)
+    embed.add_field(name='IVP', value='Taylor Chung', inline=True)
+    embed.add_field(name='EVP', value='Pranav Srinivasan, Solaine Zhao', inline=True)
+    embed.add_field(name='Treasurer', value='Nick Turner', inline=True)
+    embed.add_field(name='Corporate Relations', value='Jason Song', inline=True)
+    embed.add_field(name='Secretary', value='Katherine Nasif', inline=True)
+    embed.add_field(name='Publicity', value='Courtney Gibbons', inline=True)
+    embed.add_field(name='Events Coordinator', value='Esha Thota', inline=True)
+    embed.add_field(name='College Outreach', value='Ryeder Geyer', inline=True)
+    embed.add_field(name='Projects and Lab Manager', value='Brandon Le, Bradley Schulz', inline=True)
+    embed.add_field(name='R&D', value='Aaron Kuo', inline=True)
     embed.add_field(name='Webmaster', value='Robert Peralta', inline=True)
-    embed.add_field(name='Micromouse Lead', value='Bradley Schulz, Tyler Price', inline=True)
-    embed.add_field(name='Aircopter Lead', value='Aaron Kuo, Eric Tang', inline=True)
-    embed.add_field(name='DAV Lead', value='Brandon Le, David Kao', inline=True)
-    embed.add_field(name='Workshops Manager', value='Jackie Lam, Travis Graening', inline=True)
-    embed.add_field(name='OPS Lead', value='Ryeder Geyer, Taylor Chung', inline=True)
+    embed.add_field(name='Micromouse Lead', value='Dominic Olson, Tim Jacques', inline=True)
+    embed.add_field(name='Aircopter Lead', value='Alexiy Samoylov, Tim Zou', inline=True)
+    embed.add_field(name='DAV Lead', value='Andrew Fantino, Achinthya Poduval', inline=True)
+    embed.add_field(name='Workshops Manager', value='David Kao, Siddhant Gupta', inline=True)
+    embed.add_field(name='OPS Lead', value='Margot Nguyen, Preston Rooker', inline=True)
+    embed.add_field(name='WRAP Lead', value='Tyler Price, Vaibhav Gupta', inline=True)
     embed.set_image(url='https://media3.giphy.com/media/E4Xf4Qy3Cd4b97pKoQ/giphy.gif?cid=790b761124a9b3ec6f873d62a688fb6d49f6990e6450b97e&rid=giphy.gif&ct=g')
 
     await ctx.send(embed=embed)
