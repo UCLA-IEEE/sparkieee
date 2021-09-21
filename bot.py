@@ -29,15 +29,28 @@ async def join_roles_announcement():
         await message.add_reaction(emoji=client.get_emoji(DAV_EMOJI))
         await message.add_reaction(emoji=client.get_emoji(WRAP_EMOJI))
 
+async def choose_pronouns_announcement():
+    text = "React to this message to assign yourself your preferred pronouns! Unreact to reverse it.\n" \
+           "React with \U0001F422 for he/him/his\n" \
+           "React with \U0001F419 for she/her/hers\n" \
+           "React with \U0001F42C for they/them\n"
+    role_channel = client.get_channel(ROLE_CHANNEL_ID)
+    if role_channel:
+        message = await role_channel.send(text)
+        await message.add_reaction(emoji='\U0001F422')
+        await message.add_reaction(emoji='\U0001F419')
+        await message.add_reaction(emoji='\U0001F42C')
+
 @client.event
 async def on_ready():
     print(f'SparkIEEE has logged in as {client.user}')
     await client.change_presence(activity=discord.Game(name=f'what is love? 🤖 | {client.command_prefix}help'))
     # await join_roles_announcement()
+    # await choose_pronouns_announcement()
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id != REACT_MSG_ID:
+    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != REACT_MSG_ID:
         return
     member = payload.member
     guild = member.guild
@@ -53,12 +66,18 @@ async def on_raw_reaction_add(payload):
         role = discord.utils.get(guild.roles, name="DAV")
     if payload.emoji == client.get_emoji(WRAP_EMOJI):
         role = discord.utils.get(guild.roles, name="WRAP")
+    if payload.emoji.name == '\U0001F422':
+        role = discord.utils.get(guild.roles, name="he/him/his")
+    if payload.emoji.name == '\U0001F419':
+        role = discord.utils.get(guild.roles, name="she/her/hers")
+    if payload.emoji.name == '\U0001F42C':
+        role = discord.utils.get(guild.roles, name="they/them")
     if role:
         await member.add_roles(role)
 
 @client.event
 async def on_raw_reaction_remove(payload):
-    if payload.message_id != REACT_MSG_ID:
+    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != REACT_MSG_ID:
         return
     guild = await client.fetch_guild(payload.guild_id)
     member = await guild.fetch_member(payload.user_id)
@@ -74,6 +93,12 @@ async def on_raw_reaction_remove(payload):
         role = discord.utils.get(guild.roles, name="DAV")
     if payload.emoji == client.get_emoji(WRAP_EMOJI):
         role = discord.utils.get(guild.roles, name="WRAP")
+    if payload.emoji.name == '\U0001F422':
+        role = discord.utils.get(guild.roles, name="he/him/his")
+    if payload.emoji.name == '\U0001F419':
+        role = discord.utils.get(guild.roles, name="she/her/hers")
+    if payload.emoji.name == '\U0001F42C':
+        role = discord.utils.get(guild.roles, name="they/them")
     if role:
         await member.remove_roles(role)
 
