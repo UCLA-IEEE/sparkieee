@@ -235,7 +235,7 @@ async def labhours(ctx, *args):
 
             # Lab hours embed for all officers
             title = f"Lab Hours for {shift_str}"
-            description = f'```{officers}```'
+            description = f'```\n{officers}```'
             if special_hours:
                 description = description + f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
@@ -259,7 +259,7 @@ async def labhours(ctx, *args):
                 for officer_name, hours_string in hours.items():
                     # Lab hours embed for an officer
                     title = f"{officer_name}'s Lab Hours"
-                    description = f'```{hours_string}```'
+                    description = f'```\n{hours_string}```'
                     embed = discord.Embed(title=title, description=description, color=color)
 
                     await ctx.send(embed=embed)
@@ -434,7 +434,7 @@ async def lab_hours_reminder():
                 officers = 'None'
             # Lab hours embed for all officers
             title = f"Lab Hours for {shift_str}"
-            description = f'```{officers}```'
+            description = f'```\n{officers}```'
             if special_hours:
                 description = description + f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
