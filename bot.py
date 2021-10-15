@@ -270,6 +270,78 @@ async def labhours(ctx, *args):
         except Exception as e:
             await ctx.send(e)
 
+@client.command()
+@commands.has_role(officer_title)
+async def paydeposit(ctx, *args):
+    if len(args) < 2:
+        err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
+            f'For example, `{client.command_prefix}paydeposit Aircopter "Jay Park"'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{fmt_projects()}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        new_val = True
+        msg = ''
+
+        name = get_name_from_args(args[1:])
+        old_val = sheets.paydeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        if old_val == 'TRUE':
+            msg = f'**{name}** has already paid their deposit for **{args[0]}**.\n'
+        else:
+            # Successful check off embed
+            title = f"Deposit payment for {name}"
+            description = f'**{name}** has paid their deposit for **{args[0]}**!\n'
+            embed = discord.Embed(title=title, description=description, color=color)
+
+            # Set msg variable to be the embed
+            msg = embed
+
+        # Check if it's a string or embed
+        if (type(msg) is str):
+            await ctx.send(msg)
+        else:
+            await ctx.send(embed=embed)
+
+@client.command()
+@commands.has_role(officer_title)
+async def returndeposit(ctx, *args):
+    if len(args) < 2:
+        err_msg = 'Please supply the command with project, and member name.\n' \
+            f'For example, `{client.command_prefix}returndeposit Aircopter "Jay Park"'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{fmt_projects()}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        new_val = True
+        msg = ''
+
+        name = get_name_from_args(args[1:])
+        old_val = sheets.returndeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=5)
+        if old_val == 'TRUE':
+            msg = f'**{name}** has already received their deposit for **{args[0]}**.\n'
+        else:
+            # Successful check off embed
+            title = f"Deposit payment for {name}"
+            description = f'**{name}** has received their deposit for **{args[0]}**!\n'
+            embed = discord.Embed(title=title, description=description, color=color)
+
+            # Set msg variable to be the embed
+            msg = embed
+
+        # Check if it's a string or embed
+        if (type(msg) is str):
+            await ctx.send(msg)
+        else:
+            await ctx.send(embed=embed)
+
 
 @client.command()
 @commands.has_role(officer_title)
@@ -285,29 +357,43 @@ async def checkoff(ctx, *args):
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
-        new_val = 'x' if len(args) < 4 else args[3]
+        new_val = 1 if len(args) < 4 else args[3]
         msg = ''
-        if 'SPREAD_ID' in info:
-            # try:
-            # All arguments including the third arg and after are counted as the name
-            name = get_name_from_args(args[2:])
-            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
-            if old_val == 'x':
-                msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
-            else:
-                # Successful check off embed
-                title = f"Checked off {name}"
-                description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
-                    f'```Value changed from "{old_val}" to "{new_val}"```'
-                embed = discord.Embed(title=title, description=description, color=color)
+        # if 'SPREAD_ID' in info:
+        #     # try:
+        #     # All arguments including the third arg and after are counted as the name
+        #     name = get_name_from_args(args[2:])
+        #     old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+        #     if old_val == 'x':
+        #         msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
+        #     else:
+        #         # Successful check off embed
+        #         title = f"Checked off {name}"
+        #         description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
+        #             f'```Value changed from "{old_val}" to "{new_val}"```'
+        #         embed = discord.Embed(title=title, description=description, color=color)
 
-                # Set msg variable to be the embed
-                msg = embed
+        #         # Set msg variable to be the embed
+        #         msg = embed
 
-            # except Exception as e:
-            #     await ctx.send(e)
+        #     # except Exception as e:
+        #     #     await ctx.send(e)
+        # else:
+        #     msg = f'{args[0]} does not currently have a checkoff sheet.'
+
+        name = get_name_from_args(args[2:])
+        old_val = sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        if old_val == new_val:
+            msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
         else:
-            msg = f'{args[0]} does not currently have a checkoff sheet.'
+            # Successful check off embed
+            title = f"Checked off {name}"
+            description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
+                f'```Value changed from "{old_val}" to "{new_val}"```'
+            embed = discord.Embed(title=title, description=description, color=color)
+
+            # Set msg variable to be the embed
+            msg = embed
 
         # Check if it's a string or embed
         if (type(msg) is str):

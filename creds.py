@@ -12,7 +12,8 @@ PROJECTS = {
         },
         # TODO: Change with updated spreadsheets and facebook groups when they're established
         'FB_GROUP': 'https://www.facebook.com/groups/ieeeops',
-        'SPREAD_ID': '1fmcb5f__16A4G9rROlBHqBV-ceITsuybxnP33OaMWs8'
+        'SPREAD_ID': '1fmcb5f__16A4G9rROlBHqBV-ceITsuybxnP33OaMWs8',
+        'TREASURER_IND': 0
     },
 
     'MICROMOUSE': {
@@ -23,7 +24,8 @@ PROJECTS = {
         },
         # TODO: Change with updated spreadsheets and facebook groups when they're established
         'FB_GROUP': 'https://www.facebook.com/groups/910014872738486',
-        'SPREAD_ID': '1keqQdjEdb9efmIOeeiWlTcpvCrLCxQy3B5O6uwUy1os'
+        'SPREAD_ID': '1keqQdjEdb9efmIOeeiWlTcpvCrLCxQy3B5O6uwUy1os',
+        'TREASURER_IND': 1  
     },
 
     'AIRCOPTER': {
@@ -34,7 +36,8 @@ PROJECTS = {
         },
         # TODO: Change with updated spreadsheets and facebook groups when they're established
         'FB_GROUP': 'https://www.facebook.com/groups/aircopter',
-        'SPREAD_ID': '1eSxjNyX9znHYA2qRW5Oxiwf9v6Wck5YHYZmYRU_WjaE'
+        'SPREAD_ID': '1eSxjNyX9znHYA2qRW5Oxiwf9v6Wck5YHYZmYRU_WjaE',
+        'TREASURER_IND': 2
     },
 
     'DAV': {
@@ -45,7 +48,8 @@ PROJECTS = {
         },
         # TODO: Change with updated spreadsheets and facebook groups when they're established
         'FB_GROUP': 'https://www.facebook.com/groups/673094760079791',
-        'SPREAD_ID': '1hdYvslAb1XKKFe767ztQMwTqxGLdmYhpwUtmbyVRA0s'
+        'SPREAD_ID': '1hdYvslAb1XKKFe767ztQMwTqxGLdmYhpwUtmbyVRA0s',
+        'TREASURER_IND': 3
     },
 
     'WRAP': {
@@ -55,7 +59,8 @@ PROJECTS = {
             'Vaibhav Gupta': 'Vaibhav Gupta#2284'
         },
         # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/2609332906044188'
+        'FB_GROUP': 'https://www.facebook.com/groups/2609332906044188',
+        'TREASURER_IND': 4
     },
 
     'WORKSHOPS': {
@@ -81,6 +86,12 @@ FIRST_LH_ROW_INDEX = 1
 FIRST_LH_COL_INDEX = 0
 LAB_HOURS_START_TIME = 10 # 10 AM
 NUM_DAYS_IN_TABLE = 6
+
+# Treasurer Deposit Sheet Constants
+TREASURER_SHEET = '1Xvkvt62ZiDtIzMjjwH6mMLY5Icn5gADDfSEfnydIWRk'
+PAY_DEPOSIT_COL = 2
+RETURN_DEPOSIT_COL = 4
+ASSIGNMENT_ROW = 3
 
 # Emojis
 ROLE_CHANNEL_ID = 793585913916948482

@@ -106,7 +106,7 @@ class SheetTransformer:
             raise Exception(f'Error, project member **{name}** not found.')
 
         assignment_col = None
-        for col, a in enumerate(values[0]):
+        for col, a in enumerate(values[ASSIGNMENT_ROW]):
             if a.upper().strip() == assignment.upper().strip():
                 if col < len(values[member_row - 1]):
                     old_val = values[member_row - 1][col]
@@ -122,6 +122,72 @@ class SheetTransformer:
                                          'range': f'{title}!{assignment_col}{member_row}:{assignment_col}{member_row}',
                                          'values': [[val]],
                                      }).execute()
+        return old_val
+
+    def paydeposit(self, spread_id, name, val=True, sheet_index=5):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        title = sheet.get('properties').get('title')
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+        if not values:
+            raise Exception('Error, no values found.')
+
+        old_val = ''
+        member_row = None
+        for row, r in enumerate(values):
+            if r[0].upper().strip() == name.upper().strip():
+                member_row = row + 1
+        if member_row == None:
+            raise Exception(f'Error, project member **{name}** not found.')
+
+        old_val = values[member_row - 1][PAY_DEPOSIT_COL]
+        deposit_col = self.column_to_letter(PAY_DEPOSIT_COL + 1)
+
+        self.service.values().update(spreadsheetId=spread_id,
+                                     valueInputOption='RAW',
+                                     range=f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                     body={
+                                         'range': f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                         'values': [[val]],
+                                     }).execute()
+
+        return old_val
+
+    def returndeposit(self, spread_id, name, val=True, sheet_index=5):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        title = sheet.get('properties').get('title')
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+        if not values:
+            raise Exception('Error, no values found.')
+
+        old_val = ''
+        member_row = None
+        for row, r in enumerate(values):
+            if r[0].upper().strip() == name.upper().strip():
+                member_row = row + 1
+        if member_row == None:
+            raise Exception(f'Error, project member **{name}** not found.')
+
+        old_val = values[member_row - 1][RETURN_DEPOSIT_COL]
+        deposit_col = self.column_to_letter(RETURN_DEPOSIT_COL + 1)
+
+        self.service.values().update(spreadsheetId=spread_id,
+                                     valueInputOption='RAW',
+                                     range=f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                     body={
+                                         'range': f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                         'values': [[val]],
+                                     }).execute()
+
         return old_val
 
     #todo: add fancy formatting (percents, colors, dates, etc.)
