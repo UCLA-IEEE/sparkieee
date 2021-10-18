@@ -106,7 +106,12 @@ class SheetTransformer:
             raise Exception(f'Error, project member **{name}** not found.')
 
         assignment_col = None
-        for col, a in enumerate(values[ASSIGNMENT_ROW]):
+        # Change row that we're looking for the assignment based off treasurer sheet or project sheet
+        if spread_id == TREASURER_SHEET:
+            assignment_row = ASSIGNMENT_ROW
+        else:
+            assignment_row = 0
+        for col, a in enumerate(values[assignment_row]):
             if a.upper().strip() == assignment.upper().strip():
                 if col < len(values[member_row - 1]):
                     old_val = values[member_row - 1][col]
@@ -292,6 +297,75 @@ class SheetTransformer:
         }
         response = self.service.batchUpdate(spreadsheetId=spread_id, body=body).execute()
         return
+
+    def add_treasurer_assignment(self, assignment, sheet_index=5):
+        # Obtain necessary info from Treasurer Deposit Sheet
+        spread_info = self.service.get(spreadsheetId=TREASURER_SHEET).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        title = sheet.get('properties').get('title')
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        result = self.service.values().get(spreadsheetId=TREASURER_SHEET,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+
+        result = self.service.values().get(spreadsheetId=TREASURER_SHEET,
+                                           range=f'{title}!A1:1').execute()
+
+        # Follow similar algorithm to self.add_assignment to find new column
+        assignments = result.get('values')
+        new_col_index = len(assignments[0]) if assignments else TREASURER_PROJECT_COL_INDEX
+        new_col = self.column_to_letter(new_col_index + 1)
+
+        result = self.service.values().get(spreadsheetId=TREASURER_SHEET,
+                                           range=f'{title}!A:A').execute()
+
+        # Obtain weighted total of projects to place in cell F2
+        weight_total = f'=SUM(G1:{new_col}1)'
+
+        # Add new assignment to Treasurer sheet column
+        self.service.values().clear(spreadsheetId=TREASURER_SHEET, range=f'{title}!{new_col}:{new_col}').execute()
+        self.service.values().update(spreadsheetId=TREASURER_SHEET,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!{new_col}:{new_col}',
+                                     body={
+                                         'range': f'{title}!{new_col}:{new_col}',
+                                         'values': [[0, '', '', assignment]],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
+
+        # Updated weighted total of projects (column F)
+        self.service.values().update(spreadsheetId=TREASURER_SHEET,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!F:F',
+                                     body={
+                                         'range': f'{title}!F:F',
+                                         'values': [['Weighting', weight_total, 'Green if valid']],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
+        
+        # Update return amount equation for each member (coumn D values)
+        return_amount = ['', '', '', 'Return Amount']
+        for row, r in enumerate(values):
+            if row < 4:
+                continue
+            val = f'=SUMPRODUCT($G$1:${new_col}$1, G{row+1}:{new_col}{row+1}) * $B$1'
+            return_amount.append(val)
+            
+        # Update return amount column
+        self.service.values().update(spreadsheetId=TREASURER_SHEET,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!D:D',
+                                     body={
+                                         'range': f'{title}!D:D',
+                                         'values': [return_amount],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
+
+        
+        return (new_col_index - TREASURER_PROJECT_COL_INDEX)
+
+
 
     def change_deadline(self, spread_id, assignment, deadline, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()

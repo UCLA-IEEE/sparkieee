@@ -7,67 +7,58 @@ PROJECTS = {
     'OPS': {
         'FULL_NAME': 'Open Project Space',
         'LEADS': {
-            'Margot Nguyen': 'mango#8254',
-            'Preston Rooker': 'Preston#9607'
+            'Margot': 'mango#8254',
+            'Preston': 'Preston#9607'
         },
-        # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/ieeeops',
-        'SPREAD_ID': '1fmcb5f__16A4G9rROlBHqBV-ceITsuybxnP33OaMWs8',
+        'SPREAD_ID': '1jEGSNFQPU8Wd_uUgfmHmXq8J9UD_Wc3Jn1aSGi3hqlk',
         'TREASURER_IND': 0
     },
 
     'MICROMOUSE': {
         'FULL_NAME': 'Micromouse',
         'LEADS': {
-            'Tim Jacques': 'TJ178#5214',
-            'Dominic Olson': 'dombonist#7938'
+            'Tim J': 'TJ178#5214',
+            'Dominic': 'dombonist#7938'
         },
-        # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/910014872738486',
-        'SPREAD_ID': '1keqQdjEdb9efmIOeeiWlTcpvCrLCxQy3B5O6uwUy1os',
+        'SPREAD_ID': '14UHo1kvLdw1lgMTEvchIT6Lr2rPbaq1NFbwIhnBylfg',
         'TREASURER_IND': 1  
     },
 
     'AIRCOPTER': {
         'FULL_NAME': 'Aircopter',
         'LEADS': {
-            'Alexis Samoylov': 'Czerny Voron#9175',
-            'Tim Zou': 'timz#1019'
+            'Alexis': 'Czerny Voron#9175',
+            'Tim Z': 'timz#1019'
         },
-        # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/aircopter',
-        'SPREAD_ID': '1eSxjNyX9znHYA2qRW5Oxiwf9v6Wck5YHYZmYRU_WjaE',
+        'SPREAD_ID': '1vFptmlPk-wnsytaCsTLGPkzSZ59MNYpWy7r7OSMRBGY',
         'TREASURER_IND': 2
     },
 
     'DAV': {
         'FULL_NAME': 'Digital Audio Visualizer',
         'LEADS': {
-            'Andrew Fantino': 'stewe951#1615',
-            'Achinthya Poduval': 'Achinthya#7343'
+            'Andrew': 'stewe951#1615',
+            'Achinthya': 'Achinthya#7343'
         },
-        # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/673094760079791',
-        'SPREAD_ID': '1hdYvslAb1XKKFe767ztQMwTqxGLdmYhpwUtmbyVRA0s',
+        'SPREAD_ID': '1DVziROAKMz0fOuruWET839MWcHhAMzpf4PxwqTZNPnY',
         'TREASURER_IND': 3
     },
 
     'WRAP': {
         'FULL_NAME': 'Wireless, RF, and Analog Project',
         'LEADS': {
-            'Tyler Price': 'tyler.4p#7755',
-            'Vaibhav Gupta': 'Vaibhav Gupta#2284'
+            'Tyler': 'tyler.4p#7755',
+            'Vaibhav': 'Vaibhav Gupta#2284'
         },
-        # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/2609332906044188',
+        'SPREAD_ID': '1ao3AKzt0XpwfX0JXiM2vHZ8e0OfR45WhDdpY_dYoqOE',
         'TREASURER_IND': 4
     },
 
     'WORKSHOPS': {
         'FULL_NAME': 'Workshops',
         'LEADS': {
-            'David Kao': 'uh oh its david#7756',
-            'Siddhant Gupta': 'Condolences#1271'
+            'David': 'uh oh its david#7756',
+            'Siddhant': 'Condolences#1271'
         },
         # TODO: Change with updated spreadsheets and facebook groups when they're established
         'FB_GROUP': 'https://www.facebook.com/groups/324536415200701'
@@ -92,6 +83,7 @@ TREASURER_SHEET = '1Xvkvt62ZiDtIzMjjwH6mMLY5Icn5gADDfSEfnydIWRk'
 PAY_DEPOSIT_COL = 2
 RETURN_DEPOSIT_COL = 4
 ASSIGNMENT_ROW = 3
+TREASURER_PROJECT_COL_INDEX = 5
 
 # Emojis
 ROLE_CHANNEL_ID = 793585913916948482

@@ -122,12 +122,14 @@ async def help(ctx):
     embed.add_field(name='Commands', value=commands_msg, inline=False)
 
     project_leads_msg = f'```ahk\n\n' \
-        f'[1] checkoff p a u [v] - Check off user u for project p, assignment a. v is the new value; the default value is "x".\n' \
+        f'[1] checkoff p a u [v] - Check off user u for project p, assignment a. v is the new value; the default value is "1".\n' \
         f'To add notes, {prefix}checkoff p a u "checkpoint 1"\n' \
         f'[2] addassign p a d - Add assignment a, due on date d, to project p\n' \
         f'[3] extend p a d - Change deadline to d for assignment a in project p\n' \
-        f'[4] closelab - Disable lab hours reminders for the day\n' \
-        f'[5] openlab - Reenable lab hours reminders, starting tomorrow```\n'
+        f'[4] paydeposit p u - Mark on Treasurer sheet that member u has paid deposit for project p\n' \
+        f'[4] returndeposit p u - Mark on Treasurer sheet that member u has been returned their deposit for project p\n' \
+        f'[6] closelab - Disable lab hours reminders for the day\n' \
+        f'[7] openlab - Reenable lab hours reminders, starting tomorrow```\n'
 
     # Only show these commands when executed by an officer!
     if is_officer(ctx):
@@ -170,6 +172,9 @@ async def project(ctx, *args):
             except Exception as e:
                 await ctx.send(e)
 
+        if projects == '':
+            projects = f'{args[0]} has no projects yet\n'
+
         nl_with_dash = '\n- '
         nl = '\n'
         # Use iterator to grab the first (and only) value from the dictionary
@@ -187,7 +192,8 @@ async def project(ctx, *args):
         if 'SPREAD_ID' in info:
             embed.add_field(name=f'{args[0]} Projects:', value=f'{projects}', inline=False)
         embed.add_field(name=f'{args[0]} Project Leads:', value=f'```{leads}```', inline=False)
-        embed.add_field(name='Links', value=f'[{args[0]} Facebook Group]({info["FB_GROUP"]})', inline=False)
+        if 'FB_GROUP' in info:
+            embed.add_field(name='Links', value=f'[{args[0]} Facebook Group]({info["FB_GROUP"]})', inline=False)
 
         await ctx.send(embed=embed)
 
@@ -208,7 +214,7 @@ async def status(ctx, *args):
         if 'SPREAD_ID' in info:
             try:
                 # Turn everything starting from the 1st argument into a string
-                name = get_name_from_args(args[1:])
+                name = get_name_from_args(args[1])
 
                 title = f'**{name}\'s {args[0].upper()} Project Status:**'
                 description = f'```\n{sheets.lookup(info["SPREAD_ID"], name=name)}```'
@@ -287,7 +293,7 @@ async def paydeposit(ctx, *args):
         new_val = True
         msg = ''
 
-        name = get_name_from_args(args[1:])
+        name = get_name_from_args(args[1])
         old_val = sheets.paydeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
         if old_val == 'TRUE':
             msg = f'**{name}** has already paid their deposit for **{args[0]}**.\n'
@@ -323,8 +329,8 @@ async def returndeposit(ctx, *args):
         new_val = True
         msg = ''
 
-        name = get_name_from_args(args[1:])
-        old_val = sheets.returndeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=5)
+        name = get_name_from_args(args[1])
+        old_val = sheets.returndeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
         if old_val == 'TRUE':
             msg = f'**{name}** has already received their deposit for **{args[0]}**.\n'
         else:
@@ -357,45 +363,50 @@ async def checkoff(ctx, *args):
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
-        new_val = 1 if len(args) < 4 else args[3]
+        new_val = '1' if len(args) < 4 else args[3]
         msg = ''
-        # if 'SPREAD_ID' in info:
-        #     # try:
-        #     # All arguments including the third arg and after are counted as the name
-        #     name = get_name_from_args(args[2:])
-        #     old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
-        #     if old_val == 'x':
-        #         msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
-        #     else:
-        #         # Successful check off embed
-        #         title = f"Checked off {name}"
-        #         description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
-        #             f'```Value changed from "{old_val}" to "{new_val}"```'
-        #         embed = discord.Embed(title=title, description=description, color=color)
+        if 'SPREAD_ID' in info:
+            # Change: Changed this to enforce use of "Jay Park"
+            name = get_name_from_args(args[2])
+            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+            if old_val == new_val:
+                msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
+            else:
+                # Successful check off embed
+                title = f"Checked off {name}"
+                description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
+                    f'```Value changed from "{old_val}" to "{new_val}"```'
+                embed = discord.Embed(title=title, description=description, color=color)
 
-        #         # Set msg variable to be the embed
-        #         msg = embed
+                # Set msg variable to be the embed
+                msg = embed
 
-        #     # except Exception as e:
-        #     #     await ctx.send(e)
-        # else:
-        #     msg = f'{args[0]} does not currently have a checkoff sheet.'
+            # except Exception as e:
+            #     await ctx.send(e)
+        else:
+            msg = f'{args[0]} does not currently have a checkoff sheet.'
 
-        name = get_name_from_args(args[2:])
-        old_val = sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        # Check if it's a string or embed
+        if (type(msg) is str):
+            await ctx.send(msg)
+        else:
+            await ctx.send(embed=embed)
+
+        # Get name enforcing use of "Jay Park"
+        name = get_name_from_args(args[2])
+        sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
         if old_val == new_val:
-            msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
+            msg = f'**{name}** has already been checked off for **{args[0]} {args[1]} on the Treasurer Sheet**.\n'
         else:
             # Successful check off embed
             title = f"Checked off {name}"
-            description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
-                f'```Value changed from "{old_val}" to "{new_val}"```'
+            description = f'**{name}** has been checked off for **{args[0]} {args[1]}** on the Treasurer Sheet!\n' \
+                f'```Value changed from "{old_val}" to "{new_val}" on the Treasurer Sheet```'
             embed = discord.Embed(title=title, description=description, color=color)
 
             # Set msg variable to be the embed
             msg = embed
-
-        # Check if it's a string or embed
+        
         if (type(msg) is str):
             await ctx.send(msg)
         else:
@@ -425,7 +436,20 @@ async def addassign(ctx, *args):
                 return
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
+
         await ctx.send(msg)
+
+    # Add assignment to treasurer sheet
+    try:
+        num_assignments = sheets.add_treasurer_assignment(args[1], info['TREASURER_IND'])
+        msg = f'Successfully added assignment **{args[1]}** to the Treasurer spreadsheet.\n'
+        msg += f'{args[0]} leads: please update weights on Treasurer sheet.\n'
+        msg += f'There are {num_assignments} total assignments\n'
+    except Exception as e:
+        await ctx.send(e)
+        return
+
+    await ctx.send(msg)
 
 
 @client.command()
@@ -601,10 +625,13 @@ def is_officer(ctx):
 # TO-DO: Come up with a better name for this function?
 # If we do .status OPS Joe Schmoe, this just captures Joe Schmoe as its own string
 # No need to use quotes anymore with this
+
+# Changed this to enforce the use of "Jay Park"
 def get_name_from_args(args):
-    name = ''
-    for i in range(0, len(args)):
-        name += " " + args[i]
+    # name = ''
+    # for i in range(0, len(args)):
+    #     name += " " + args[i]
+    name = args
     return name.strip()
 
 sheets = SheetTransformer()
