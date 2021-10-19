@@ -1,3 +1,6 @@
 credentials.json
 token.pickle
+token.json
 firebase_credentials.json
+*.sh
+token.json
