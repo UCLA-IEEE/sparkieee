@@ -294,7 +294,11 @@ async def paydeposit(ctx, *args):
         msg = ''
 
         name = get_name_from_args(args[1])
-        old_val = sheets.paydeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        try:
+            old_val = sheets.paydeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        except Exception as e:
+            await ctx.send(e)
+            return
         if old_val == 'TRUE':
             msg = f'**{name}** has already paid their deposit for **{args[0]}**.\n'
         else:
@@ -330,7 +334,11 @@ async def returndeposit(ctx, *args):
         msg = ''
 
         name = get_name_from_args(args[1])
-        old_val = sheets.returndeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        try:
+            old_val = sheets.returndeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        except Exception as e:
+            await ctx.send(e)
+            return
         if old_val == 'TRUE':
             msg = f'**{name}** has already received their deposit for **{args[0]}**.\n'
         else:
@@ -368,7 +376,11 @@ async def checkoff(ctx, *args):
         if 'SPREAD_ID' in info:
             # Change: Changed this to enforce use of "Jay Park"
             name = get_name_from_args(args[2])
-            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+            try:
+                old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+            except Exception as e:
+                await ctx.send(e)
+                return
             if old_val == new_val:
                 msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
             else:
@@ -394,7 +406,11 @@ async def checkoff(ctx, *args):
 
         # Get name enforcing use of "Jay Park"
         name = get_name_from_args(args[2])
-        sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        try:
+            sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        except Exception as e:
+            await ctx.send(e)
+            return
         if old_val == new_val:
             msg = f'**{name}** has already been checked off for **{args[0]} {args[1]} on the Treasurer Sheet**.\n'
         else:
