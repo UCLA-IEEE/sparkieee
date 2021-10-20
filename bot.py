@@ -291,7 +291,11 @@ async def checkoff(ctx, *args):
             # try:
             # All arguments including the third arg and after are counted as the name
             name = get_name_from_args(args[2:])
-            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+            try:
+                old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+            except Exception as e:
+                await ctx.send(e)
+                return
             if old_val == 'x':
                 msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
             else:

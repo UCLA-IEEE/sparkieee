@@ -99,11 +99,33 @@ class SheetTransformer:
 
         old_val = ''
         member_row = None
+        # If have same first name, consider them near match
+        near_matches = []
+        member_first_name = name.split(' ')[0].upper().strip()
+
         for row, r in enumerate(values):
             if r[0].upper().strip() == name.upper().strip():
                 member_row = row + 1
+                break
+
+            # Store person with same first name into array
+            matched_first_name = r[0].split(' ')[0].upper().strip()
+            if matched_first_name.startswith(member_first_name):
+                near_matches.append(r[0])
+
         if member_row == None:
-            raise Exception(f'Error, project member **{name}** not found.')
+            # Base error message
+            err_msg = f'Error, project member {name} not found.'
+
+            # Format near matches to a string
+            near_matches_as_str = 'Here are the closest matches:\n```'
+            if len(near_matches) > 0:
+                # Go through each, separate with a new line
+                for match in near_matches:
+                    near_matches_as_str += match + '\n'
+                # Add it to the base error message
+                err_msg += '\n' + near_matches_as_str + '\n```'
+            raise Exception(err_msg)
 
         assignment_col = None
         for col, a in enumerate(values[0]):
