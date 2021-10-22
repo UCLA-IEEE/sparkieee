@@ -529,7 +529,31 @@ def get_name_from_args(args):
         name += " " + args[i]
     return name.strip()
 
+
 ####### LAB BUCK COMMANDS #######
+# Finds the closest matching name from firebase
+def find_name(name: str, group: str = None) -> list:
+    user_list = firebase.get_members(group)
+    name = name.lower()
+    possible_names = []
+    for user in user_list:
+        if name in user.lower() or user.lower() in name:
+            possible_names.append(user)
+    return possible_names
+
+def replacement_name_str(name:str, group: str = None) -> str:
+    replacements = find_name(name, group)
+    msg = ''
+    if replacements:
+        if len(replacements) > 1:
+            msg = "Here are closest matches: \n```"
+        else:
+            msg = "Closest match is: \n```"
+        for name in replacements:
+            msg += name.title() + '\n'
+        msg += "```"
+    return msg
+
 # Give lab bucks
 # Can either give an amount or a reward
 # First put reward then a list of names
@@ -555,7 +579,7 @@ async def pay(ctx, *args):
                 if amt == -1:
                     msg = "Error giving lab bucks to " + name
                 elif amt == -2:
-                    msg = name + " not found in database"
+                    msg = name + " not found in lab buck database\n" + replacement_name_str(name)
                 elif amt == -3:
                     msg = name + " already received this reward"
                 elif amt == -4:
@@ -577,7 +601,7 @@ async def spend(ctx, *args):
         for name in names:
             amt = firebase.use_lb(name, prize)
             if amt == -1:
-                msg = name + " not found in database"
+                msg = name + " not found in lab buck database\n" + replacement_name_str(name)
             elif amt == -2:
                 msg = prize + " is not a valid prize"
             elif amt < 0:
@@ -600,9 +624,9 @@ async def transactions(ctx, *args):
             for transaction in history:
                 if transaction:
                     msg += '\n\t' + transaction
-            await ctx.send(msg)
         else:
-            await ctx.send("Unable to find history for " + name)
+            msg = "Unable to find history for " + name + '\n' + replacement_name_str(name)
+        await ctx.send(msg)
     else:
         await ctx.send("Invalid arguments")
 
@@ -614,9 +638,9 @@ async def balance(ctx, *args):
         current_balance = firebase.get_balance(name)
         if current_balance:
             msg = name + " currently has " + str(current_balance) + " lab bucks"
-            await ctx.send(msg)
         else:
-            await ctx.send("Unable to find balance for " + name)
+            msg = "Unable to find balance for " + name + '\n' + replacement_name_str(name)
+        await ctx.send(msg)
     else:
         await ctx.send("Invalid arguments")
 

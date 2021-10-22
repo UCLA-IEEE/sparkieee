@@ -26,7 +26,10 @@ class FirebaseManager(object):
         Retrieve all members of a specific
         """
         ref = db.reference('users')
-        snapshot = ref.order_by_child("project").equal_to(project).get()
+        if project:
+            snapshot = ref.order_by_child("project").equal_to(project).get()
+        else:
+            snapshot = ref.get(())
         return [user for user in snapshot]
 
 
