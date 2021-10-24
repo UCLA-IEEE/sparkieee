@@ -407,7 +407,7 @@ async def checkoff(ctx, *args):
         # Get name enforcing use of "Jay Park"
         name = get_name_from_args(args[2])
         try:
-            sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+            old_val = sheets.checkoff(TREASURER_SHEET, assignment=args[1], name=name, val=new_val, sheet_index=info['TREASURER_IND'])
         except Exception as e:
             await ctx.send(e)
             return
