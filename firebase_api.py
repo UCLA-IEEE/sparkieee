@@ -1,10 +1,9 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import db
-
 from enum import Enum
 
-cred_path = 'firebase_credentials.json'
+firebase_creds = 'firebase_credentials.json'
 
 class ErrorCodes(Enum):
     GenericError = -1
@@ -22,14 +21,11 @@ class FirebaseManager(object):
 
     def __init__(self) -> None:
         super().__init__()
-
-        # Fetch the service account key JSON file contents
-        cred = credentials.Certificate(cred_path)
-
         # Initialize the app with a service account, granting admin privileges
-        firebase_admin.initialize_app(cred, {
-            'databaseURL': 'https://ieee-lab-bucks-default-rtdb.firebaseio.com/'
-        })
+        firebase_admin.initialize_app(
+            credentials.Certificate(firebase_creds),
+            {'databaseURL': 'https://ieee-lab-bucks-default-rtdb.firebaseio.com/'}
+        )
 
     def get_members(self, project: str = None) -> list:
         """
