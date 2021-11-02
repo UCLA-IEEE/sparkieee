@@ -5,6 +5,7 @@ from creds import *
 from datetime import datetime, timedelta
 from discord.ext import commands, tasks
 from sheet_transformer import SheetTransformer
+from firebase_api import FirebaseManager, ErrorCodes
 
 lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
@@ -117,7 +118,9 @@ async def help(ctx):
         f'[2] project p - Deadlines, contact info, links, and more for project p\n' \
         f'[3] status p u - Project completion status in project p for member u\n' \
         f'[4] labhours - Check whose lab hours it is right now\n' \
-        f'[5] labhours o - Look up lab hours for officer o\n```'
+        f'[5] labhours o - Look up lab hours for officer o\n' \
+        f'[6] balance p - Current lab buck balance for person p\n' \
+        f'[7] transactions p - List of lab buck transactions for person p\n```'
     # Add commands as new field to embed
     embed.add_field(name='Commands', value=commands_msg, inline=False)
 
@@ -129,10 +132,20 @@ async def help(ctx):
         f'[4] closelab - Disable lab hours reminders for the day\n' \
         f'[5] openlab - Reenable lab hours reminders, starting tomorrow```\n'
 
+    lab_buck_msg = f'```ahk\n\n' \
+        f'[1] pay a [p] - Give person/people p lab bucks. Pay either with the name of a reward or a monetary value\n' \
+        f'[2] spend a [p] - Spend lab bucks of person/people p for reward a\n' \
+        f'[3] balance p - Get current lab buck balance of person p\n' \
+        f'[4] transactions p - Get all lab buck transactions made by person p\n' \
+        f'[3] rewards p - Get rewards associated with project p (or all rewards if no project is specified \n' \
+        f'[4] prizes - Get list of prizes and their prices \n' \
+        f'[5] price p - Get price of prize p \n' \
+
     # Only show these commands when executed by an officer!
     if is_officer(ctx):
         # Add project leads commands field to the embed
         embed.add_field(name='Project Lead Commands', value=project_leads_msg, inline=False)
+        embed.add_field(name='Lab Buck Management', value=lab_buck_msg, inline=False)
 
     # Can turn this into a 2nd embed if you want thumbnails
     embed.add_field(name='IEEE at UCLA Website', value='[Website](http://ieeebruins.com/)', inline=True)
@@ -521,6 +534,169 @@ def get_name_from_args(args):
         name += " " + args[i]
     return name.strip()
 
+
+####### LAB BUCK COMMANDS #######
+# Finds the closest matching name from firebase
+def find_name(name: str, group: str = None) -> list:
+    user_list = firebase.get_members(group)
+    name = name.lower()
+    possible_names = []
+    for user in user_list:
+        if name in user.lower() or user.lower() in name:
+            possible_names.append(user)
+    return possible_names
+
+def replacement_name_str(name:str, group: str = None) -> str:
+    replacements = find_name(name, group)
+    msg = ''
+    if replacements:
+        msg += "Closest matches: \n```" if len(replacements) > 1 else "Closest match is: \n```"
+        msg += "\n".join(replacements).title() + "```"
+    return msg
+
+# Give lab bucks
+# Can either give an amount or a reward
+# First put reward then a list of names
+# Each name must have quotes around it
+@client.command()
+@commands.has_role(officer_title)
+async def pay(ctx, *args):
+    if len(args) > 1:
+        reward = args[0]
+        names = args[1:]
+        for name in names:
+            if type(name) != str:
+                msg = "Invalid name"
+            else:
+                # give reward
+                if reward.isnumeric():
+                    # Specific amount
+                    amt = firebase.add_lb(name, int(reward))
+                else:
+                    # Name of a reward
+                    amt = firebase.give_reward(name, reward)
+                # decode result from firebase command
+                if amt == ErrorCodes.GenericError:
+                    msg = "Error giving lab bucks to " + name
+                elif amt == ErrorCodes.UserNotFound:
+                    msg = name + " not found in lab buck database\n" + replacement_name_str(name)
+                elif amt == ErrorCodes.DuplicateReward:
+                    msg = name + " already received this reward"
+                elif amt == ErrorCodes.InvalidReward:
+                    msg = "Invalid reward for " + name
+                else:
+                    msg = name + " has received " + str(amt) + " lab bucks"
+            await ctx.send(msg)
+    else:
+        await ctx.send("Invalid arguments")
+
+# Use lab bucks
+# First provide prize and then a list of names
+@client.command()
+@commands.has_role(officer_title)
+async def spend(ctx, *args):
+    prize = args[0]
+    if len(args) > 1:
+        names = args[1:]
+        for name in names:
+            amt = firebase.use_lb(name, prize)
+            if amt == ErrorCodes.UserNotFound:
+                msg = name + " not found in lab buck database\n" + replacement_name_str(name)
+            elif amt == ErrorCodes.InvalidPrize:
+                msg = prize + " is not a valid prize"
+            elif amt < 0:
+                msg = name + " needs " + str(-amt) + " more lab bucks for " + prize
+            else:
+                msg = name + " redeemed " + str(amt) + " lab bucks for " + prize
+            msg += '\n' + name + " now has " + str(firebase.get_balance(name)) + " lab bucks"
+            await ctx.send(msg)
+    else:
+        await ctx.send("Invalid arguments")
+
+
+# Get lab buck transaction history for a user
+@client.command()
+async def transactions(ctx, *args):
+    if len(args) == 1:
+        name = args[0]
+        history = firebase.get_transaction_history(name)
+        if history:
+            msg = "Transactions for " + name + ":"
+            for transaction in history:
+                if transaction:
+                    msg += '\n\t' + transaction
+        else:
+            msg = "Unable to find history for " + name + '\n' + replacement_name_str(name)
+        await ctx.send(msg)
+    else:
+        await ctx.send("Invalid arguments")
+
+# Get current lab buck balance for a user
+@client.command()
+async def balance(ctx, *args):
+    if len(args) == 1:
+        name = args[0]
+        current_balance = firebase.get_balance(name)
+        if current_balance == ErrorCodes.UserNotFound:
+            msg = name.title() + " not found in database"
+        elif current_balance >= 0:
+            msg = name + " currently has " + str(current_balance) + " lab bucks"
+        else:
+            msg = "Unable to find balance for " + name + '\n' + replacement_name_str(name)
+        await ctx.send(msg)
+    else:
+        await ctx.send("Invalid arguments")
+
+
+# Get available rewards
+@client.command()
+async def rewards(ctx, *args):
+    if len(args) <= 1:
+        # Get all prizes
+        if len(args) == 0:
+            rewards_dict = firebase.get_rewards()
+            msg = "Available rewards```\n"
+        # Get prizes for a specific category
+        elif len(args) == 1:
+            rewards_dict = firebase.get_rewards(args[0])
+            msg = "Available rewards for " + args[0] + "```\n"
+        if rewards_dict:
+            msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in rewards_dict.items()])
+            msg += "```"
+        else:
+            msg = "Invalid project"
+    else:
+        msg = "Invalid arguments"
+    await ctx.send(msg)
+
+# Gets available prizes
+@client.command()
+async def prizes(ctx, *args):
+    # Get all prizes
+    prize_dict = firebase.get_prizes()
+    msg = "Prize list with prices:```\n"
+    # Format output with prize list in order of increasing price
+    msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in
+                      sorted(prize_dict.items(), key=lambda item: item[1])])
+    msg += "```"
+    await ctx.send(msg)
+
+# Get price of a specific prize
+@client.command()
+async def price(ctx, *args):
+    if len(args) == 1:
+        prize = args[0]
+        p = firebase.get_price(prize)
+        if p == ErrorCodes.InvalidPrize:
+            msg = prize + " is not a valid prize"
+        else:
+            msg = "```" + prize + " costs " + str(p) + " lab bucks```"
+    else:
+        msg = "Invalid arguments"
+    await ctx.send(msg)
+
+
 sheets = SheetTransformer()
+firebase = FirebaseManager()
 lab_hours_reminder.start()
 client.run(SPARKIEEE_TOKEN)

@@ -10,6 +10,8 @@ from google.auth.transport.requests import Request
 # If modifying these scopes, delete the file token.pickle. https://developers.google.com/sheets/api/guides/authorizing
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 
+cred_file = 'credentials.json'
+
 class SheetTransformer:
     def __init__(self):
         creds = None
@@ -21,7 +23,7 @@ class SheetTransformer:
                 creds.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    'credentials.json', SCOPES)
+                    cred_file, SCOPES)
                 creds = flow.run_local_server(port=0)
                 # Save the credentials for the next run
             with open('token.pickle', 'wb') as token:

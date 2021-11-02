@@ -24,6 +24,12 @@ python3 bot.py
 
 To generate a new one, just delete the existing `token.pickle` file and rerun the script. It will prompt you to login to your Google account and give the corresponding permissions.
 
+To access firebase in order to use the lab bucks commands, install the firebase admin package:
+```
+pip install firebase_admin
+```
+Firebase also requires credentials which should be in a file named `firebase_credentials.json`. To get this file, contact the owner of the firebase account.
+
 To create the Discord bot account, use the Discord developer portal to generate a Bot account. Under the 'OAuth2' menu, give the account a 'bot' scope and 'Administrator' privileges, then use the generated URL to invite the bot to the server.
 
 ## Testing 
