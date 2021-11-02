@@ -45,31 +45,12 @@ class SheetTransformer:
         member_row = None
         if name:
             # If have same first name, consider them near match
-            near_matches = []
-            member_first_name = name.split(' ')[0].upper().strip()
-
-            for r in values:
-                if r[0].upper().strip() == name.upper().strip():
-                    member_row = r
-                    break
-
-                # Store person with same first name into array
-                matched_first_name = r[0].split(' ')[0].upper().strip()
-                if matched_first_name == member_first_name:
-                    near_matches.append(r[0])
-
+            member_row, near_matches = self.get_nearest_matches(values=values, name=name)
             if member_row == None:
                 # Base error message
                 err_msg = f'Error, project member {name} not found.'
+                err_msg += self.print_nearest_matches(near_matches)
 
-                # Format near matches to a string
-                near_matches_as_str = 'Here are the closest matches:\n```'
-                if len(near_matches) > 0:
-                    # Go through each, separate with a new line
-                    for match in near_matches:
-                        near_matches_as_str += match + '\n'
-                    # Add it to the base error message
-                    err_msg += '\n' + near_matches_as_str + '\n```'
                 raise Exception(err_msg)
 
         summary = ''
@@ -98,19 +79,17 @@ class SheetTransformer:
             raise Exception('Error, no values found.')
 
         old_val = ''
-        member_row = None
-        for row, r in enumerate(values):
-            if r[0].upper().strip() == name.upper().strip():
-                member_row = row + 1
+        member_row, near_matches = self.get_nearest_matches(values, name)
         if member_row == None:
-            raise Exception(f'Error, project member **{name}** not found.')
+            # Base error message
+            err_msg = f'Error, project member {name} not found.'
+            err_msg += self.print_nearest_matches(near_matches)
+
+            raise Exception(err_msg)
 
         assignment_col = None
         # Change row that we're looking for the assignment based off treasurer sheet or project sheet
-        if spread_id == TREASURER_SHEET:
-            assignment_row = ASSIGNMENT_ROW
-        else:
-            assignment_row = 0
+        assignment_row = ASSIGNMENT_ROW if spread_id == TREASURER_SHEET else 0
         for col, a in enumerate(values[assignment_row]):
             if a.upper().strip() == assignment.upper().strip():
                 if col < len(values[member_row - 1]):
@@ -145,31 +124,12 @@ class SheetTransformer:
         member_row = None
 
         # If have same first name, consider them near match
-        near_matches = []
-        member_first_name = name.split(' ')[0].upper().strip()
-
-        for row, r in enumerate(values):
-            if r[0].upper().strip() == name.upper().strip():
-                member_row = row + 1
-                break
-
-            # Store person with same first name into array
-            matched_first_name = r[0].split(' ')[0].upper().strip()
-            if matched_first_name.startswith(member_first_name):
-                near_matches.append(r[0])
+        member_row, near_matches = self.get_nearest_matches(values=values, name=name)
 
         if member_row == None:
             # Base error message
             err_msg = f'Error, project member {name} not found.'
-
-            # Format near matches to a string
-            near_matches_as_str = 'Here are the closest matches:\n```'
-            if len(near_matches) > 0:
-                # Go through each, separate with a new line
-                for match in near_matches:
-                    near_matches_as_str += match + '\n'
-                # Add it to the base error message
-                err_msg += '\n' + near_matches_as_str + '\n```'
+            err_msg += self.print_nearest_matches(near_matches)
             raise Exception(err_msg)
 
         old_val = values[member_row - 1][PAY_DEPOSIT_COL]
@@ -198,34 +158,15 @@ class SheetTransformer:
             raise Exception('Error, no values found.')
 
         old_val = ''
-        member_row = None
 
         # If have same first name, consider them near match
-        near_matches = []
-        member_first_name = name.split(' ')[0].upper().strip()
+        member_row, near_matches = self.get_nearest_matches(values=values, name=name)
 
-        for row, r in enumerate(values):
-            if r[0].upper().strip() == name.upper().strip():
-                member_row = row + 1
-                break
-
-            # Store person with same first name into array
-            matched_first_name = r[0].split(' ')[0].upper().strip()
-            if matched_first_name.startswith(member_first_name):
-                near_matches.append(r[0])
 
         if member_row == None:
             # Base error message
             err_msg = f'Error, project member {name} not found.'
-
-            # Format near matches to a string
-            near_matches_as_str = 'Here are the closest matches:\n```'
-            if len(near_matches) > 0:
-                # Go through each, separate with a new line
-                for match in near_matches:
-                    near_matches_as_str += match + '\n'
-                # Add it to the base error message
-                err_msg += '\n' + near_matches_as_str + '\n```'
+            err_msg += self.print_nearest_matches(near_matches)
             raise Exception(err_msg)
 
         old_val = values[member_row - 1][RETURN_DEPOSIT_COL]
@@ -571,3 +512,33 @@ class SheetTransformer:
             letter = chr(int(temp) + 65) + letter
             column = (column - temp - 1) / 26
         return letter
+
+    def get_nearest_matches(self, values, name):
+        member_row = None
+        near_matches = []
+        member_first_name = name.split(' ')[0].upper().strip()
+
+        for row, r in enumerate(values):
+            if r[0].upper().strip() == name.upper().strip():
+                member_row = row + 1
+                break
+
+            # Store person with same first name into array
+            matched_first_name = r[0].split(' ')[0].upper().strip()
+            if matched_first_name.startswith(member_first_name):
+                near_matches.append(r[0])
+        
+        return member_row, near_matches
+
+    def print_nearest_matches(self, near_matches):
+        err_msg = ''
+        # Format near matches to a string
+        near_matches_as_str = 'Here are the closest matches:\n```'
+        if len(near_matches) > 0:
+            # Go through each, separate with a new line
+            for match in near_matches:
+                near_matches_as_str += match + '\n'
+            # Add it to the base error message
+            err_msg += '\n' + near_matches_as_str + '\n```'
+
+        return err_msg
