@@ -357,7 +357,7 @@ async def checkoff(ctx, *args):
         info = PROJECTS[args[0].upper()]
         new_val = '1' if len(args) < 4 else args[3]
         # Change: Changed this to enforce use of "Jay Park"
-        name = get_name_from_args(args[2:3])
+        name = get_name_from_args(args[2])
         if 'SPREAD_ID' in info:
             try:
                 old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
