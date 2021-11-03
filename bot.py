@@ -356,7 +356,6 @@ async def checkoff(ctx, *args):
     else:
         info = PROJECTS[args[0].upper()]
         new_val = '1' if len(args) < 4 else args[3]
-        # Change: Changed this to enforce use of "Jay Park"
         name = get_name_from_args(args[2])
         if 'SPREAD_ID' in info:
             try:
@@ -520,28 +519,26 @@ async def lab_hours_reminder():
         return
 
     lab_channel = client.get_channel(LAB_CHANNEL_ID)
-
+    if not lab_channel:
+        return
+    
     try:
         if labhour_msg:
             await labhour_msg.delete()
+            
         if date.hour == 18:
             msg = f'Lab Hours have officially ended. For a full list of lab hours, visit http://ieeebruins.com/lab.'
-            if lab_channel:
-                await lab_channel.send(msg)
+            await lab_channel.send(msg)
         else:
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
             special_hours = sheets.get_lab_special_by_time(LAB_HOURS, date)
 
-            if not officers:
-                officers = 'None'
-            # Lab hours embed for all officers
             title = f"Lab Hours for {shift_str}"
-            description = f'```\n{officers}```'
+            description = f'```\n{officers if officers else 'None'}```'
             if special_hours:
-                description = description + f'\n**Special Lab Hours!**:\n{special_hours}'
+                description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
-            if lab_channel:
-                await lab_channel.send(embed=embed)
+            await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
@@ -609,12 +606,10 @@ def is_officer(ctx):
 # If we do .status OPS Joe Schmoe, this just captures Joe Schmoe as its own string
 # No need to use quotes anymore with this
 
-# Changed this to enforce the use of "Jay Park"
 def get_name_from_args(args):
     name = ''
     for i in range(0, len(args)):
         name += " " + args[i]
-    # name = args
     return name.strip()
 
 sheets = SheetTransformer()
