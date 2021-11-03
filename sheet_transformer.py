@@ -47,31 +47,12 @@ class SheetTransformer:
         member_row = None
         if name:
             # If have same first name, consider them near match
-            near_matches = []
-            member_first_name = name.split(' ')[0].upper().strip()
-
-            for r in values:
-                if r[0].upper().strip() == name.upper().strip():
-                    member_row = r
-                    break
-
-                # Store person with same first name into array
-                matched_first_name = r[0].split(' ')[0].upper().strip()
-                if matched_first_name == member_first_name:
-                    near_matches.append(r[0])
-
+            member_row, near_matches = self.get_nearest_matches(values=values, name=name)
             if member_row == None:
                 # Base error message
                 err_msg = f'Error, project member {name} not found.'
+                err_msg += self.print_nearest_matches(near_matches)
 
-                # Format near matches to a string
-                near_matches_as_str = 'Here are the closest matches:\n```'
-                if len(near_matches) > 0:
-                    # Go through each, separate with a new line
-                    for match in near_matches:
-                        near_matches_as_str += match + '\n'
-                    # Add it to the base error message
-                    err_msg += '\n' + near_matches_as_str + '\n```'
                 raise Exception(err_msg)
 
         summary = ''
@@ -100,15 +81,18 @@ class SheetTransformer:
             raise Exception('Error, no values found.')
 
         old_val = ''
-        member_row = None
-        for row, r in enumerate(values):
-            if r[0].upper().strip() == name.upper().strip():
-                member_row = row + 1
+        member_row, near_matches = self.get_nearest_matches(values, name)
         if member_row == None:
-            raise Exception(f'Error, project member **{name}** not found.')
+            # Base error message
+            err_msg = f'Error, project member {name} not found.'
+            err_msg += self.print_nearest_matches(near_matches)
+
+            raise Exception(err_msg)
 
         assignment_col = None
-        for col, a in enumerate(values[0]):
+        # Change row that we're looking for the assignment based off treasurer sheet or project sheet
+        assignment_row = ASSIGNMENT_ROW if spread_id == TREASURER_SHEET else 0
+        for col, a in enumerate(values[assignment_row]):
             if a.upper().strip() == assignment.upper().strip():
                 if col < len(values[member_row - 1]):
                     old_val = values[member_row - 1][col]
@@ -124,6 +108,80 @@ class SheetTransformer:
                                          'range': f'{title}!{assignment_col}{member_row}:{assignment_col}{member_row}',
                                          'values': [[val]],
                                      }).execute()
+        return old_val
+
+    def paydeposit(self, spread_id, name, val=True, sheet_index=5):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        title = sheet.get('properties').get('title')
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+        if not values:
+            raise Exception('Error, no values found.')
+
+        old_val = ''
+        member_row = None
+
+        # If have same first name, consider them near match
+        member_row, near_matches = self.get_nearest_matches(values=values, name=name)
+
+        if member_row == None:
+            # Base error message
+            err_msg = f'Error, project member {name} not found.'
+            err_msg += self.print_nearest_matches(near_matches)
+            raise Exception(err_msg)
+
+        old_val = values[member_row - 1][PAY_DEPOSIT_COL]
+        deposit_col = self.column_to_letter(PAY_DEPOSIT_COL + 1)
+
+        self.service.values().update(spreadsheetId=spread_id,
+                                     valueInputOption='RAW',
+                                     range=f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                     body={
+                                         'range': f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                         'values': [[val]],
+                                     }).execute()
+
+        return old_val
+
+    def returndeposit(self, spread_id, name, val=True, sheet_index=5):
+        spread_info = self.service.get(spreadsheetId=spread_id).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        title = sheet.get('properties').get('title')
+        result = self.service.values().get(spreadsheetId=spread_id,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+        if not values:
+            raise Exception('Error, no values found.')
+
+        old_val = ''
+
+        # If have same first name, consider them near match
+        member_row, near_matches = self.get_nearest_matches(values=values, name=name)
+
+
+        if member_row == None:
+            # Base error message
+            err_msg = f'Error, project member {name} not found.'
+            err_msg += self.print_nearest_matches(near_matches)
+            raise Exception(err_msg)
+
+        old_val = values[member_row - 1][RETURN_DEPOSIT_COL]
+        deposit_col = self.column_to_letter(RETURN_DEPOSIT_COL + 1)
+
+        self.service.values().update(spreadsheetId=spread_id,
+                                     valueInputOption='RAW',
+                                     range=f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                     body={
+                                         'range': f'{title}!{deposit_col}{member_row}:{deposit_col}{member_row}',
+                                         'values': [[val]],
+                                     }).execute()
+
         return old_val
 
     #todo: add fancy formatting (percents, colors, dates, etc.)
@@ -228,6 +286,75 @@ class SheetTransformer:
         }
         response = self.service.batchUpdate(spreadsheetId=spread_id, body=body).execute()
         return
+
+    def add_treasurer_assignment(self, assignment, sheet_index=5):
+        # Obtain necessary info from Treasurer Deposit Sheet
+        spread_info = self.service.get(spreadsheetId=TREASURER_SHEET).execute()
+        sheet = spread_info.get('sheets')[sheet_index]
+        title = sheet.get('properties').get('title')
+        n_rows = sheet.get('properties').get('gridProperties').get('rowCount')
+        n_cols = sheet.get('properties').get('gridProperties').get('columnCount')
+        result = self.service.values().get(spreadsheetId=TREASURER_SHEET,
+                                           range=f'{title}!A1:{self.column_to_letter(n_cols)}{n_rows}').execute()
+        values = result.get('values', [])
+
+        result = self.service.values().get(spreadsheetId=TREASURER_SHEET,
+                                           range=f'{title}!A1:1').execute()
+
+        # Follow similar algorithm to self.add_assignment to find new column
+        assignments = result.get('values')
+        new_col_index = len(assignments[0]) if assignments else TREASURER_PROJECT_COL_INDEX
+        new_col = self.column_to_letter(new_col_index + 1)
+
+        result = self.service.values().get(spreadsheetId=TREASURER_SHEET,
+                                           range=f'{title}!A:A').execute()
+
+        # Obtain weighted total of projects to place in cell F2
+        weight_total = f'=SUM(G1:{new_col}1)'
+
+        # Add new assignment to Treasurer sheet column
+        self.service.values().clear(spreadsheetId=TREASURER_SHEET, range=f'{title}!{new_col}:{new_col}').execute()
+        self.service.values().update(spreadsheetId=TREASURER_SHEET,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!{new_col}:{new_col}',
+                                     body={
+                                         'range': f'{title}!{new_col}:{new_col}',
+                                         'values': [[0, '', '', assignment]],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
+
+        # Updated weighted total of projects (column F)
+        self.service.values().update(spreadsheetId=TREASURER_SHEET,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!F:F',
+                                     body={
+                                         'range': f'{title}!F:F',
+                                         'values': [['Weighting', weight_total, 'Green if valid']],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
+        
+        # Update return amount equation for each member (coumn D values)
+        return_amount = ['', '', '', 'Return Amount']
+        for row, r in enumerate(values):
+            if row < 4:
+                continue
+            val = f'=SUMPRODUCT($G$1:${new_col}$1, G{row+1}:{new_col}{row+1}) * $B$1'
+            return_amount.append(val)
+            
+        # Update return amount column
+        self.service.values().update(spreadsheetId=TREASURER_SHEET,
+                                     valueInputOption='USER_ENTERED',
+                                     range=f'{title}!D:D',
+                                     body={
+                                         'range': f'{title}!D:D',
+                                         'values': [return_amount],
+                                         'majorDimension': 'COLUMNS',
+                                     }).execute()
+
+        
+        return (new_col_index - TREASURER_PROJECT_COL_INDEX)
+
+
 
     def change_deadline(self, spread_id, assignment, deadline, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()
@@ -387,3 +514,33 @@ class SheetTransformer:
             letter = chr(int(temp) + 65) + letter
             column = (column - temp - 1) / 26
         return letter
+
+    def get_nearest_matches(self, values, name):
+        member_row = None
+        near_matches = []
+        member_first_name = name.split(' ')[0].upper().strip()
+
+        for row, r in enumerate(values):
+            if r[0].upper().strip() == name.upper().strip():
+                member_row = row + 1
+                break
+
+            # Store person with same first name into array
+            matched_first_name = r[0].split(' ')[0].upper().strip()
+            if matched_first_name.startswith(member_first_name):
+                near_matches.append(r[0])
+        
+        return member_row, near_matches
+
+    def print_nearest_matches(self, near_matches):
+        err_msg = ''
+        # Format near matches to a string
+        near_matches_as_str = 'Here are the closest matches:\n```'
+        if len(near_matches) > 0:
+            # Go through each, separate with a new line
+            for match in near_matches:
+                near_matches_as_str += match + '\n'
+            # Add it to the base error message
+            err_msg += '\n' + near_matches_as_str + '\n```'
+
+        return err_msg

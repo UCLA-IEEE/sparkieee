@@ -125,12 +125,14 @@ async def help(ctx):
     embed.add_field(name='Commands', value=commands_msg, inline=False)
 
     project_leads_msg = f'```ahk\n\n' \
-        f'[1] checkoff p a u [v] - Check off user u for project p, assignment a. v is the new value; the default value is "x".\n' \
+        f'[1] checkoff p a u [v] - Check off user u for project p, assignment a. v is the new value; the default value is "1".\n' \
         f'To add notes, {prefix}checkoff p a u "checkpoint 1"\n' \
         f'[2] addassign p a d - Add assignment a, due on date d, to project p\n' \
         f'[3] extend p a d - Change deadline to d for assignment a in project p\n' \
-        f'[4] closelab - Disable lab hours reminders for the day\n' \
-        f'[5] openlab - Reenable lab hours reminders, starting tomorrow```\n'
+        f'[4] paydeposit p u - Mark on Treasurer sheet that member u has paid deposit for project p\n' \
+        f'[4] returndeposit p u - Mark on Treasurer sheet that member u has been returned their deposit for project p\n' \
+        f'[6] closelab - Disable lab hours reminders for the day\n' \
+        f'[7] openlab - Reenable lab hours reminders, starting tomorrow```\n'
 
     lab_buck_msg = f'```ahk\n\n' \
         f'[1] pay a [p] - Give person/people p lab bucks. Pay either with the name of a reward or a monetary value\n' \
@@ -183,6 +185,9 @@ async def project(ctx, *args):
             except Exception as e:
                 await ctx.send(e)
 
+        if projects == '':
+            projects = f'{args[0]} has no projects yet\n'
+
         nl_with_dash = '\n- '
         nl = '\n'
         # Use iterator to grab the first (and only) value from the dictionary
@@ -200,7 +205,8 @@ async def project(ctx, *args):
         if 'SPREAD_ID' in info:
             embed.add_field(name=f'{args[0]} Projects:', value=f'{projects}', inline=False)
         embed.add_field(name=f'{args[0]} Project Leads:', value=f'```{leads}```', inline=False)
-        embed.add_field(name='Links', value=f'[{args[0]} Facebook Group]({info["FB_GROUP"]})', inline=False)
+        if 'FB_GROUP' in info:
+            embed.add_field(name='Links', value=f'[{args[0]} Facebook Group]({info["FB_GROUP"]})', inline=False)
 
         await ctx.send(embed=embed)
 
@@ -283,6 +289,70 @@ async def labhours(ctx, *args):
         except Exception as e:
             await ctx.send(e)
 
+@client.command()
+@commands.has_role(officer_title)
+async def paydeposit(ctx, *args):
+    if len(args) < 2:
+        err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
+            f'For example, `{client.command_prefix}paydeposit Aircopter "Jay Park"'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{fmt_projects()}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        new_val = True
+
+        name = get_name_from_args(args[1:])
+        try:
+            old_val = sheets.paydeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        except Exception as e:
+            await ctx.send(e)
+            return
+        if old_val == 'TRUE':
+            msg = f'**{name}** has already paid their deposit for **{args[0]}**.\n'
+            await ctx.send(msg)
+        else:
+            # Successful check off embed
+            title = f"Deposit payment for {name}"
+            description = f'**{name}** has paid their deposit for **{args[0]}**!\n'
+            embed = discord.Embed(title=title, description=description, color=color)
+            await ctx.send(embed=embed)
+
+@client.command()
+@commands.has_role(officer_title)
+async def returndeposit(ctx, *args):
+    if len(args) < 2:
+        err_msg = 'Please supply the command with project, and member name.\n' \
+            f'For example, `{client.command_prefix}returndeposit Aircopter "Jay Park"'
+        await ctx.send(err_msg)
+    elif args[0].upper() not in PROJECTS.keys():
+        err_msg = f'`{args[0]}` is not a valid project.\n' \
+            'Here is a list of our currently active projects:\n' \
+            f'```{fmt_projects()}```\n'
+        await ctx.send(err_msg)
+    else:
+        info = PROJECTS[args[0].upper()]
+        new_val = True
+
+        name = get_name_from_args(args[1:])
+        try:
+            old_val = sheets.returndeposit(TREASURER_SHEET, name=name, val=new_val, sheet_index=info['TREASURER_IND'])
+        except Exception as e:
+            await ctx.send(e)
+            return
+        if old_val == 'TRUE':
+            msg = f'**{name}** has already received their deposit for **{args[0]}**.\n'
+            await ctx.send(msg)
+        else:
+            # Successful check off embed
+            title = f"Deposit payment for {name}"
+            description = f'**{name}** has received their deposit for **{args[0]}**!\n'
+            embed = discord.Embed(title=title, description=description, color=color)
+            await ctx.send(embed=embed)
+
 
 @client.command()
 @commands.has_role(officer_title)
@@ -298,35 +368,47 @@ async def checkoff(ctx, *args):
         await ctx.send(err_msg)
     else:
         info = PROJECTS[args[0].upper()]
-        new_val = 'x' if len(args) < 4 else args[3]
-        msg = ''
+        new_val = '1' if len(args) < 4 else args[3]
+        # use slicing to pass arr of strings to helper function
+        name = get_name_from_args(args[2:3])
         if 'SPREAD_ID' in info:
-            # try:
-            # All arguments including the third arg and after are counted as the name
-            name = get_name_from_args(args[2:])
-            old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
-            if old_val == 'x':
+            try:
+                old_val = sheets.checkoff(info["SPREAD_ID"], assignment=args[1], name=name, val=new_val)
+            except Exception as e:
+                await ctx.send(e)
+                return
+            if old_val == new_val:
                 msg = f'**{name}** has already been checked off for **{args[0]} {args[1]}**.\n'
+                await ctx.send(msg)
             else:
                 # Successful check off embed
                 title = f"Checked off {name}"
                 description = f'**{name}** has been checked off for **{args[0]} {args[1]}**!\n' \
                     f'```Value changed from "{old_val}" to "{new_val}"```'
                 embed = discord.Embed(title=title, description=description, color=color)
-
-                # Set msg variable to be the embed
-                msg = embed
-
-            # except Exception as e:
-            #     await ctx.send(e)
+                await ctx.send(embed=embed)
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
-
-        # Check if it's a string or embed
-        if (type(msg) is str):
             await ctx.send(msg)
-        else:
-            await ctx.send(embed=embed)
+
+        await checkoff_treasurer_subroutine(ctx, args[0], args[1], name, new_val, info['TREASURER_IND'])
+
+async def checkoff_treasurer_subroutine(ctx, project, assignment, name, new_val, treasurer_index):
+    try:
+        old_val = sheets.checkoff(TREASURER_SHEET, assignment=assignment, name=name, val=new_val, sheet_index=treasurer_index)
+    except Exception as e:
+        await ctx.send(e)
+        return
+    if old_val == new_val:
+        msg = f'**{name}** has already been checked off for **{project} {assignment} on the Treasurer Sheet**.\n'
+        await ctx.send(msg)
+    else:
+        # Successful check off embed
+        title = f"Checked off {name}"
+        description = f'**{name}** has been checked off for **{project} {assignment}** on the Treasurer Sheet!\n' \
+            f'```Value changed from "{old_val}" to "{new_val}" on the Treasurer Sheet```'
+        embed = discord.Embed(title=title, description=description, color=color)
+        await ctx.send(embed=embed)
 
 @client.command()
 @commands.has_role(officer_title)
@@ -352,7 +434,23 @@ async def addassign(ctx, *args):
                 return
         else:
             msg = f'{args[0]} does not currently have a checkoff sheet.'
+
         await ctx.send(msg)
+
+    await addassign_treasurer_subroutine(ctx, args[0], args[1], info['TREASURER_IND'])
+
+async def addassign_treasurer_subroutine(ctx, project, assignment, treasurer_index):
+    # Add assignment to treasurer sheet
+    try:
+        num_assignments = sheets.add_treasurer_assignment(assignment, treasurer_index)
+        msg = f'Successfully added assignment **{assignment}** to the Treasurer spreadsheet.\n'
+        msg += f'{project} leads: please update weights on Treasurer sheet.\n'
+        msg += f'There are {num_assignments} total assignments\n'
+    except Exception as e:
+        await ctx.send(e)
+        return
+
+    await ctx.send(msg)
 
 
 @client.command()
@@ -434,34 +532,27 @@ async def lab_hours_reminder():
     if date.hour < 10 or date.hour > 19:
         return
 
+    lab_channel = client.get_channel(LAB_CHANNEL_ID)
+    if not lab_channel:
+        return
+    
     try:
         if labhour_msg:
             await labhour_msg.delete()
+            
         if date.hour == 18:
             msg = f'Lab Hours have officially ended. For a full list of lab hours, visit http://ieeebruins.com/lab.'
+            await lab_channel.send(msg)
         else:
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
             special_hours = sheets.get_lab_special_by_time(LAB_HOURS, date)
 
-            if not officers:
-                officers = 'None'
-            # Lab hours embed for all officers
             title = f"Lab Hours for {shift_str}"
-            description = f'```\n{officers}```'
+            description = f'```\n{officers if officers else 'None'}```'
             if special_hours:
-                description = description + f'\n**Special Lab Hours!**:\n{special_hours}'
+                description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
-
-            # Somewhat confusing, but the message to be displayed is set to the embed
-            msg = embed
-
-        lab_channel = client.get_channel(LAB_CHANNEL_ID)
-        if lab_channel:
-            # Send differently if plaintext or rich embed
-            if type(msg) is str:
-                labhour_msg = await lab_channel.send(msg)
-            else:
-                labhour_msg = await lab_channel.send(embed=msg)
+            await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
@@ -528,6 +619,7 @@ def is_officer(ctx):
 # TO-DO: Come up with a better name for this function?
 # If we do .status OPS Joe Schmoe, this just captures Joe Schmoe as its own string
 # No need to use quotes anymore with this
+
 def get_name_from_args(args):
     name = ''
     for i in range(0, len(args)):
