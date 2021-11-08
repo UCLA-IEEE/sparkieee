@@ -612,7 +612,6 @@ def is_invalid_name(some_str):
 # Needed for checking inside of a function
 def is_officer(ctx):
     role_names = [role.name for role in ctx.message.author.roles]
-    # print(role_names)
     is_officer = any('officers' in role for role in role_names)
     return is_officer
 
