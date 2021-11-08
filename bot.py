@@ -141,7 +141,7 @@ async def help(ctx):
         f'[4] transactions p - Get all lab buck transactions made by person p\n' \
         f'[3] rewards p - Get rewards associated with project p (or all rewards if no project is specified \n' \
         f'[4] prizes - Get list of prizes and their prices \n' \
-        f'[5] price p - Get price of prize p \n' \
+        f'[5] price p - Get price of prize p```\n'
 
     # Only show these commands when executed by an officer!
     if is_officer(ctx):
@@ -548,7 +548,7 @@ async def lab_hours_reminder():
             special_hours = sheets.get_lab_special_by_time(LAB_HOURS, date)
 
             title = f"Lab Hours for {shift_str}"
-            description = f'```\n{officers if officers else 'None'}```'
+            description = f'```\n{officers if officers else "None"}```'
             if special_hours:
                 description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
@@ -611,10 +611,7 @@ def is_invalid_name(some_str):
 # Check if user has officer role
 # Needed for checking inside of a function
 def is_officer(ctx):
-    role_names = [role.name for role in ctx.message.author.roles]
-    if 'officers' in role_names:
-        return True
-    return False
+    return any('officers' in role.name for role in ctx.message.author.roles)
 
 # TO-DO: Come up with a better name for this function?
 # If we do .status OPS Joe Schmoe, this just captures Joe Schmoe as its own string
