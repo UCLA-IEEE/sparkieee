@@ -611,9 +611,7 @@ def is_invalid_name(some_str):
 # Check if user has officer role
 # Needed for checking inside of a function
 def is_officer(ctx):
-    role_names = [role.name for role in ctx.message.author.roles]
-    is_officer = any('officers' in role for role in role_names)
-    return is_officer
+    return any('officers' in role.name for role in ctx.message.author.roles)
 
 # TO-DO: Come up with a better name for this function?
 # If we do .status OPS Joe Schmoe, this just captures Joe Schmoe as its own string
