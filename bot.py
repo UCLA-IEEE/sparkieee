@@ -554,8 +554,7 @@ async def lab_hours_reminder():
                 description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
 
-            if lab_channel:
-                labhour_msg = await lab_channel.send(embed=embed)
+            labhour_msg = await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
