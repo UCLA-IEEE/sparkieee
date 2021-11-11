@@ -12,6 +12,7 @@ class ErrorCodes(Enum):
     DuplicateReward = -4
     InvalidReward = -5
     InvalidPrize = -6
+    PermissionError = -7
 
 class FirebaseManager(object):
     """

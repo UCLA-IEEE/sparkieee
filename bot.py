@@ -12,6 +12,7 @@ client = commands.Bot(command_prefix='.', help_command=None)
 labhour_msg = None
 
 officer_title = "officers 2021-2022"
+lab_buck_title = "lab buck admin"
 
 # Colors for embeds
 color = 0xffbb00
@@ -552,7 +553,13 @@ async def lab_hours_reminder():
             if special_hours:
                 description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
-            await lab_channel.send(embed=embed)
+
+            if lab_channel:
+                # Send differently if plaintext or rich embed
+                if type(embed) is str:
+                    labhour_msg = await lab_channel.send(embed)
+                else:
+                    labhour_msg = await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
@@ -660,7 +667,10 @@ async def pay(ctx, *args):
                 # give reward
                 if reward.isnumeric():
                     # Specific amount
-                    amt = firebase.add_lb(name, int(reward))
+                    if lab_buck_title in [role.name for role in ctx.message.author.roles]:
+                        amt = firebase.add_lb(name, int(reward))
+                    else:
+                        amt = ErrorCodes.PermissionError
                 else:
                     # Name of a reward
                     amt = firebase.give_reward(name, reward)
@@ -673,6 +683,8 @@ async def pay(ctx, *args):
                     msg = name + " already received this reward"
                 elif amt == ErrorCodes.InvalidReward:
                     msg = "Invalid reward for " + name
+                elif amt == ErrorCodes.PermissionError:
+                    msg = "You do not have permission to pay a numeric amount"
                 else:
                     msg = name + " has received " + str(amt) + " lab bucks"
             await ctx.send(msg)
@@ -747,7 +759,7 @@ async def rewards(ctx, *args):
             msg = "Available rewards```\n"
         # Get prizes for a specific category
         elif len(args) == 1:
-            rewards_dict = firebase.get_rewards(args[0])
+            rewards_dict = firebase.get_rewards(args[0].lower())
             msg = "Available rewards for " + args[0] + "```\n"
         if rewards_dict:
             msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in rewards_dict.items()])
