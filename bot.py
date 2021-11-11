@@ -140,7 +140,7 @@ async def help(ctx):
         f'[2] spend a [p] - Spend lab bucks of person/people p for reward a\n' \
         f'[3] balance p - Get current lab buck balance of person p\n' \
         f'[4] transactions p - Get all lab buck transactions made by person p\n' \
-        f'[3] rewards p - Get rewards associated with project p (or all rewards if no project is specified \n' \
+        f'[3] rewards p - Get rewards associated with project p (or all rewards if no project is specified)\n' \
         f'[4] prizes - Get list of prizes and their prices \n' \
         f'[5] price p - Get price of prize p```\n'
 
@@ -555,11 +555,7 @@ async def lab_hours_reminder():
             embed = discord.Embed(title=title, description=description, color=color)
 
             if lab_channel:
-                # Send differently if plaintext or rich embed
-                if type(embed) is str:
-                    labhour_msg = await lab_channel.send(embed)
-                else:
-                    labhour_msg = await lab_channel.send(embed=embed)
+                labhour_msg = await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
@@ -762,7 +758,7 @@ async def rewards(ctx, *args):
             rewards_dict = firebase.get_rewards(args[0].lower())
             msg = "Available rewards for " + args[0] + "```\n"
         if rewards_dict:
-            msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in rewards_dict.items()])
+            msg += '\n'.join([(reward.title() + ': ' + str(value)) for reward, value in rewards_dict.items()])
             msg += "```"
         else:
             msg = "Invalid project"
@@ -777,7 +773,7 @@ async def prizes(ctx, *args):
     prize_dict = firebase.get_prizes()
     msg = "Prize list with prices:```\n"
     # Format output with prize list in order of increasing price
-    msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in
+    msg += '\n'.join([(reward.title() + ': ' + str(value)) for reward, value in
                       sorted(prize_dict.items(), key=lambda item: item[1])])
     msg += "```"
     await ctx.send(msg)
@@ -787,11 +783,11 @@ async def prizes(ctx, *args):
 async def price(ctx, *args):
     if len(args) == 1:
         prize = args[0]
-        p = firebase.get_price(prize)
+        p = firebase.get_price(prize.lower())
         if p == ErrorCodes.InvalidPrize:
-            msg = prize + " is not a valid prize"
+            msg = prize.title()+ " is not a valid prize"
         else:
-            msg = "```" + prize + " costs " + str(p) + " lab bucks```"
+            msg = "```" + prize.title() + " costs " + str(p) + " lab bucks```"
     else:
         msg = "Invalid arguments"
     await ctx.send(msg)
