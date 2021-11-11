@@ -125,7 +125,7 @@ class FirebaseManager(object):
         if transaction_ref is None:
             return ErrorCodes.TransactionError
         transaction_ref.update({
-            len(transaction_ref.get()): msg
+            len(transaction_ref.get()): msg + ' (' + str(amt) + ')'
         })
         return amt
 
@@ -156,7 +156,7 @@ class FirebaseManager(object):
         user_ref.child(user).child('amt').set(new_amt)
         # Add this transaction to the user's list of transactions
         transaction_ref = db.reference('transactions').child(user)
-        transaction_ref.update({len(transaction_ref.get()): prize})
+        transaction_ref.update({len(transaction_ref.get()): prize + ' (' + str(-cost) + ')'})
         # return success
         return cost
 
