@@ -12,6 +12,7 @@ client = commands.Bot(command_prefix='.', help_command=None)
 labhour_msg = None
 
 officer_title = "officers 2021-2022"
+lab_buck_title = "lab buck admin"
 
 # Colors for embeds
 color = 0xffbb00
@@ -139,7 +140,7 @@ async def help(ctx):
         f'[2] spend a [p] - Spend lab bucks of person/people p for reward a\n' \
         f'[3] balance p - Get current lab buck balance of person p\n' \
         f'[4] transactions p - Get all lab buck transactions made by person p\n' \
-        f'[3] rewards p - Get rewards associated with project p (or all rewards if no project is specified \n' \
+        f'[3] rewards p - Get rewards associated with project p (or all rewards if no project is specified)\n' \
         f'[4] prizes - Get list of prizes and their prices \n' \
         f'[5] price p - Get price of prize p```\n'
 
@@ -552,7 +553,8 @@ async def lab_hours_reminder():
             if special_hours:
                 description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
-            await lab_channel.send(embed=embed)
+
+            labhour_msg = await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
@@ -660,7 +662,10 @@ async def pay(ctx, *args):
                 # give reward
                 if reward.isnumeric():
                     # Specific amount
-                    amt = firebase.add_lb(name, int(reward))
+                    if lab_buck_title in [role.name for role in ctx.message.author.roles]:
+                        amt = firebase.add_lb(name, int(reward))
+                    else:
+                        amt = ErrorCodes.PermissionError
                 else:
                     # Name of a reward
                     amt = firebase.give_reward(name, reward)
@@ -673,6 +678,8 @@ async def pay(ctx, *args):
                     msg = name + " already received this reward"
                 elif amt == ErrorCodes.InvalidReward:
                     msg = "Invalid reward for " + name
+                elif amt == ErrorCodes.PermissionError:
+                    msg = "You do not have permission to pay a numeric amount"
                 else:
                     msg = name + " has received " + str(amt) + " lab bucks"
             await ctx.send(msg)
@@ -747,10 +754,10 @@ async def rewards(ctx, *args):
             msg = "Available rewards```\n"
         # Get prizes for a specific category
         elif len(args) == 1:
-            rewards_dict = firebase.get_rewards(args[0])
+            rewards_dict = firebase.get_rewards(args[0].lower())
             msg = "Available rewards for " + args[0] + "```\n"
         if rewards_dict:
-            msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in rewards_dict.items()])
+            msg += '\n'.join([(reward.title() + ': ' + str(value)) for reward, value in rewards_dict.items()])
             msg += "```"
         else:
             msg = "Invalid project"
@@ -765,7 +772,7 @@ async def prizes(ctx, *args):
     prize_dict = firebase.get_prizes()
     msg = "Prize list with prices:```\n"
     # Format output with prize list in order of increasing price
-    msg += '\n'.join([(reward + ': ' + str(value)) for reward, value in
+    msg += '\n'.join([(reward.title() + ': ' + str(value)) for reward, value in
                       sorted(prize_dict.items(), key=lambda item: item[1])])
     msg += "```"
     await ctx.send(msg)
@@ -775,11 +782,11 @@ async def prizes(ctx, *args):
 async def price(ctx, *args):
     if len(args) == 1:
         prize = args[0]
-        p = firebase.get_price(prize)
+        p = firebase.get_price(prize.lower())
         if p == ErrorCodes.InvalidPrize:
-            msg = prize + " is not a valid prize"
+            msg = prize.title()+ " is not a valid prize"
         else:
-            msg = "```" + prize + " costs " + str(p) + " lab bucks```"
+            msg = "```" + prize.title() + " costs " + str(p) + " lab bucks```"
     else:
         msg = "Invalid arguments"
     await ctx.send(msg)
