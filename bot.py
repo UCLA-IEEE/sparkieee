@@ -11,7 +11,8 @@ lab_open = True
 client = commands.Bot(command_prefix='.', help_command=None)
 labhour_msg = None
 
-officer_title = "officers 2021-2022"
+officer_title = "officers 2022-2023"
+old_officer_title = "officers 2021-2022"
 lab_buck_title = "lab buck admin"
 
 # Colors for embeds
@@ -27,32 +28,56 @@ async def join_roles_announcement():
         message = await role_channel.send(text)
         await message.add_reaction(emoji=client.get_emoji(OPS_EMOJI))
         await message.add_reaction(emoji=client.get_emoji(MM_EMOJI))
-        await message.add_reaction(emoji=client.get_emoji(AIR_EMOJI))
+        await message.add_reaction(emoji=client.get_emoji(PR_EMOJI))
         await message.add_reaction(emoji=client.get_emoji(DAV_EMOJI))
         await message.add_reaction(emoji=client.get_emoji(WRAP_EMOJI))
 
 async def choose_pronouns_announcement():
-    text = "React to this message to assign yourself your preferred pronouns! Unreact to reverse it.\n" \
-           "React with \U0001F422 for he/him/his\n" \
-           "React with \U0001F419 for she/her/hers\n" \
-           "React with \U0001F42C for they/them\n"
+    text = "React to this message to assign yourself your pronouns! Unreact to reverse it.\n" \
+           "React with 🐢 for he/him\n" \
+           "React with 🦎 for he/they\n" \
+           "React with 🐬 for they/them\n" \
+           "React with 🦑 for she/they\n" \
+           "React with 🐙 for she/her\n" \
+           "React with 🐠 for any pronouns\n" \
+           "React with 🦀 for ask for my pronouns\n"
     role_channel = client.get_channel(ROLE_CHANNEL_ID)
     if role_channel:
         message = await role_channel.send(text)
-        await message.add_reaction(emoji='\U0001F422')
-        await message.add_reaction(emoji='\U0001F419')
-        await message.add_reaction(emoji='\U0001F42C')
+        await message.add_reaction(emoji='🐢')
+        await message.add_reaction(emoji='🦎')
+        await message.add_reaction(emoji='🐬')
+        await message.add_reaction(emoji='🦑')
+        await message.add_reaction(emoji='🐙')
+        await message.add_reaction(emoji='🐠')
+        await message.add_reaction(emoji='🦀')
+
+async def join_outreach_announcement():
+    text = "React to this message to join the ECE Outreach Committee channels.\n"
+    role_channel = client.get_channel(ROLE_CHANNEL_ID)
+    if role_channel:
+        message = await role_channel.send(text)
+        await message.add_reaction(emoji=client.get_emoji(OUTREACH_EMOJI))
+
+async def join_amp_announcement():
+    text = "React to this message to join the IEEE Alumni Mentorship Program (AMP) channels.\n"
+    role_channel = client.get_channel(ROLE_CHANNEL_ID)
+    if role_channel:
+        message = await role_channel.send(text)
+        await message.add_reaction(emoji='👥')
 
 @client.event
 async def on_ready():
     print(f'SparkIEEE has logged in as {client.user}')
-    await client.change_presence(activity=discord.Game(name=f'what is love? 🤖 | {client.command_prefix}help'))
+    await client.change_presence(activity=discord.Game(name=f'taller than ASME duck 🦆 | {client.command_prefix}help'))
     # await join_roles_announcement()
     # await choose_pronouns_announcement()
+    # await join_outreach_announcement()
+    # await join_amp_announcement()
 
 @client.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != REACT_MSG_ID:
+    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != PROJECT_MSG_ID and payload.message_id != OUTREACH_MSG_ID and payload.message_id != AMP_MSG_ID:
         return
     member = payload.member
     guild = member.guild
@@ -68,18 +93,32 @@ async def on_raw_reaction_add(payload):
         role = discord.utils.get(guild.roles, name="DAV")
     if payload.emoji == client.get_emoji(WRAP_EMOJI):
         role = discord.utils.get(guild.roles, name="WRAP")
-    if payload.emoji.name == '\U0001F422':
-        role = discord.utils.get(guild.roles, name="he/him/his")
-    if payload.emoji.name == '\U0001F419':
-        role = discord.utils.get(guild.roles, name="she/her/hers")
-    if payload.emoji.name == '\U0001F42C':
+    if payload.emoji == client.get_emoji(PR_EMOJI):
+        role = discord.utils.get(guild.roles, name="Pocket Racers")
+    if payload.emoji.name == '🐢':
+        role = discord.utils.get(guild.roles, name="he/him")
+    if payload.emoji.name == '🦎':
+        role = discord.utils.get(guild.roles, name="he/they")
+    if payload.emoji.name == '🐬':
         role = discord.utils.get(guild.roles, name="they/them")
+    if payload.emoji.name == '🦑':
+        role = discord.utils.get(guild.roles, name="she/they")
+    if payload.emoji.name == '🐙':
+        role = discord.utils.get(guild.roles, name="she/her")
+    if payload.emoji.name == '🐠':
+        role = discord.utils.get(guild.roles, name="any pronouns")
+    if payload.emoji.name == '🦀':
+        role = discord.utils.get(guild.roles, name="ask for my pronouns")
+    if payload.emoji == client.get_emoji(OUTREACH_EMOJI):
+        role = discord.utils.get(guild.roles, name="Outreach Committee")
+    if payload.emoji.name == '👥':
+        role = discord.utils.get(guild.roles, name="Alumni Mentorship Program")
     if role:
         await member.add_roles(role)
 
 @client.event
 async def on_raw_reaction_remove(payload):
-    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != REACT_MSG_ID:
+    if payload.message_id != PRONOUN_MSG_ID and payload.message_id != PROJECT_MSG_ID and payload.message_id != OUTREACH_MSG_ID and payload.message_id != AMP_MSG_ID:
         return
     guild = await client.fetch_guild(payload.guild_id)
     member = await guild.fetch_member(payload.user_id)
@@ -95,12 +134,26 @@ async def on_raw_reaction_remove(payload):
         role = discord.utils.get(guild.roles, name="DAV")
     if payload.emoji == client.get_emoji(WRAP_EMOJI):
         role = discord.utils.get(guild.roles, name="WRAP")
-    if payload.emoji.name == '\U0001F422':
-        role = discord.utils.get(guild.roles, name="he/him/his")
-    if payload.emoji.name == '\U0001F419':
-        role = discord.utils.get(guild.roles, name="she/her/hers")
-    if payload.emoji.name == '\U0001F42C':
+    if payload.emoji == client.get_emoji(PR_EMOJI):
+        role = discord.utils.get(guild.roles, name="Pocket Racers")
+    if payload.emoji.name == '🐢':
+        role = discord.utils.get(guild.roles, name="he/him")
+    if payload.emoji.name == '🦎':
+        role = discord.utils.get(guild.roles, name="he/they")
+    if payload.emoji.name == '🐬':
         role = discord.utils.get(guild.roles, name="they/them")
+    if payload.emoji.name == '🦑':
+        role = discord.utils.get(guild.roles, name="she/they")
+    if payload.emoji.name == '🐙':
+        role = discord.utils.get(guild.roles, name="she/her")
+    if payload.emoji.name == '🐠':
+        role = discord.utils.get(guild.roles, name="any pronouns")
+    if payload.emoji.name == '🦀':
+        role = discord.utils.get(guild.roles, name="ask for my pronouns")
+    if payload.emoji == client.get_emoji(OUTREACH_EMOJI):
+        role = discord.utils.get(guild.roles, name="Outreach Committee")
+    if payload.emoji.name == '👥':
+        role = discord.utils.get(guild.roles, name="Alumni Mentorship Program")
     if role:
         await member.remove_roles(role)
 
@@ -108,7 +161,7 @@ async def on_raw_reaction_remove(payload):
 async def help(ctx):
     prefix = client.command_prefix
     description = 'Hello! I am **SparkIEEE**, an IEEE Discord bot created by Bryan Wong. \n' \
-                  'Special thanks to the following contributors: Raj Piskala \n' \
+                  'Special thanks to the following contributors: Raj Piskala, Bradley Schulz, Brandon Le.\n' \
         f'To run a command, type in `{prefix}[command]`.\n' \
         f'For fields with multiple words (e.g. names), use quotation marks `""`\n\n'
     # Make new embed with description
@@ -151,9 +204,9 @@ async def help(ctx):
         embed.add_field(name='Lab Buck Management', value=lab_buck_msg, inline=False)
 
     # Can turn this into a 2nd embed if you want thumbnails
-    embed.add_field(name='IEEE at UCLA Website', value='[Website](http://ieeebruins.com/)', inline=True)
+    embed.add_field(name='IEEE at UCLA Website', value='[Website](https://ieeebruins.com/)', inline=True)
     embed.add_field(name='IEEE Linktree', value='[Linktree](https://linktr.ee/uclaieee)', inline=True)
-    embed.add_field(name='SparkIEEE on Github', value='[Github](https://github.com/bryanjwong/sparkieee)', inline=True)
+    embed.add_field(name='SparkIEEE on Github', value='[Github](https://github.com/UCLA-IEEE/sparkieee)', inline=True)
 
     await ctx.send(embed=embed)
 
@@ -245,7 +298,7 @@ async def labhours(ctx, *args):
     if len(args) == 0:
         if not lab_open:
             await ctx.send(
-                'The Lab is closed today. For a full list of lab hours, visit our lab website http://ieeebruins.com/lab.')
+                'The Lab is closed today. For a full list of lab hours, visit our lab website https://ieeebruins.com/lab.')
             return
         try:
             date = datetime.now(tz=pytz.utc)
@@ -285,13 +338,13 @@ async def labhours(ctx, *args):
                     await ctx.send(embed=embed)
             else:
                 msg = f'**{args[0]}** is either not an officer or does not have lab hours.\n' \
-                    'A full list of lab hours can be found at our lab website http://ieeebruins.com/lab.'
+                    'A full list of lab hours can be found at our lab website https://ieeebruins.com/lab.'
                 await ctx.send(msg)
         except Exception as e:
             await ctx.send(e)
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def paydeposit(ctx, *args):
     if len(args) < 2:
         err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
@@ -323,7 +376,7 @@ async def paydeposit(ctx, *args):
             await ctx.send(embed=embed)
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def returndeposit(ctx, *args):
     if len(args) < 2:
         err_msg = 'Please supply the command with project, and member name.\n' \
@@ -356,7 +409,7 @@ async def returndeposit(ctx, *args):
 
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def checkoff(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, member name, and assignment arguments.\n' \
@@ -412,7 +465,7 @@ async def checkoff_treasurer_subroutine(ctx, project, assignment, name, new_val,
         await ctx.send(embed=embed)
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def addassign(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, assignment, and deadline arguments.\n' \
@@ -455,7 +508,7 @@ async def addassign_treasurer_subroutine(ctx, project, assignment, treasurer_ind
 
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def extend(ctx, *args):
     if len(args) < 3:
         err_msg = 'Please supply the command with project, assignment, and new deadline arguments.\n' \
@@ -481,7 +534,7 @@ async def extend(ctx, *args):
 
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def closelab(ctx):
     global lab_open
     lab_open = False
@@ -490,7 +543,7 @@ async def closelab(ctx):
 
 
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def openlab(ctx):
     global lab_open
     lab_open = True
@@ -542,7 +595,7 @@ async def lab_hours_reminder():
             await labhour_msg.delete()
             
         if date.hour == 18:
-            msg = f'Lab Hours have officially ended. For a full list of lab hours, visit http://ieeebruins.com/lab.'
+            msg = f'Lab Hours have officially ended. For a full list of lab hours, visit https://ieeebruins.com/lab.'
             await lab_channel.send(msg)
         else:
             shift_str, officers = sheets.get_lab_hours_by_time(LAB_HOURS, date)
@@ -554,7 +607,8 @@ async def lab_hours_reminder():
                 description += f'\n**Special Lab Hours!**:\n{special_hours}'
             embed = discord.Embed(title=title, description=description, color=color)
 
-            labhour_msg = await lab_channel.send(embed=embed)
+            if lab_channel:
+                labhour_msg = await lab_channel.send(embed=embed)
     except Exception as e:
         print(e)
 
@@ -650,7 +704,7 @@ def replacement_name_str(name:str, group: str = None) -> str:
 # First put reward then a list of names
 # Each name must have quotes around it
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def pay(ctx, *args):
     if len(args) > 1:
         reward = args[0]
@@ -689,10 +743,10 @@ async def pay(ctx, *args):
 # Use lab bucks
 # First provide prize and then a list of names
 @client.command()
-@commands.has_role(officer_title)
+@commands.has_any_role(officer_title, old_officer_title)
 async def spend(ctx, *args):
-    prize = args[0]
     if len(args) > 1:
+        prize = args[0]
         names = args[1:]
         for name in names:
             amt = firebase.use_lb(name, prize)

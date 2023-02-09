@@ -1,6 +1,16 @@
+# Python
+__pycache__
+.venv
+
+# Secrets
 credentials.json
-token.pickle
-token.json
 firebase_credentials.json
-*.sh
 token.json
+token.pickle
+
+# Editor
+.vscode
+.idea
+
+# macOS
+.DS_Store
