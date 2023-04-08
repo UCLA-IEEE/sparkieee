@@ -79,3 +79,32 @@ To comply with the bot's checkoff commands, your spreadsheet should have the fol
 Special thanks to the following contributors:
 
 * [Raj Piskala](https://github.com/RogueArt)
+
+## Raspberry Pi Setup
+
+[Poetry](https://python-poetry.org/docs/) is used for dependency management.
+
+Poetry hangs indefinitely on Raspbian because it keeps checking the keyring. To
+make it work, put the following in `~/.bashrc`:
+
+```sh
+# Put this in ~/.bashrc
+# See https://github.com/python-poetry/poetry/issues/1917#issuecomment-1380429197
+export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+```
+
+Pip dependencies `cffi` and `cryptography` requires running the following:
+
+```sh
+$ sudo apt install build-essential libffi-dev libssl-dev python3-dev
+```
+
+`cryptography` also requires running:
+
+```sh
+$ poetry add setuptools
+```
+
+See these posts for more info: [1](https://stackoverflow.com/a/56185605),
+[2](https://raspberrypi.stackexchange.com/a/62413),
+[3](https://stackoverflow.com/a/22210069/13192508)
