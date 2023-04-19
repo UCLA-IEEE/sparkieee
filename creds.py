@@ -4,72 +4,49 @@ SPARKIEEE_TOKEN = os.getenv("SPARKIEEE_TOKEN")
 LAB_CHANNEL_ID = 724325916154658867
 
 PROJECTS = {
-    'OPS': {
-        'FULL_NAME': 'Open Project Space',
-        'LEADS': {
-            'Miriam': 'Mr.Jellybean#7816',
-            'Eli': 'bruhticulou5#2475'
-        },
+    "OPS": {
+        "FULL_NAME": "Open Project Space",
+        "LEADS": {"Miriam": "Mr.Jellybean#7816", "Eli": "bruhticulou5#2475"},
     },
-
-    'MICROMOUSE': {
-        'FULL_NAME': 'Micromouse',
-        'LEADS': {
-            'Megan': 'aloe vera plants#4770',
-            'Nathan N': 'Chiertare#1463'
-        },
+    "MICROMOUSE": {
+        "FULL_NAME": "Micromouse",
+        "LEADS": {"Megan": "aloe vera plants#4770", "Nathan N": "Chiertare#1463"},
     },
-
-    'DAV': {
-        'FULL_NAME': 'Digital Design, Architecture, and Verification / Digital Audio Visualizer',
-        'LEADS': {
-            'Tim': 'TJ178#5214',
-            'Siddhant': 'Condolences#1271'
-        },
+    "DAV": {
+        "FULL_NAME": "Digital Design, Architecture, and Verification / Digital Audio Visualizer",
+        "LEADS": {"Tim": "TJ178#5214", "Siddhant": "Condolences#1271"},
     },
-
-    'WRAP': {
-        'FULL_NAME': 'Wireless, RF, and Analog Project',
-        'LEADS': {
-            'Nathan P': 'pakuwulo#6005',
-            'Ramtin': 'Ramtin#8911'
-        },
+    "WRAP": {
+        "FULL_NAME": "Wireless, RF, and Analog Project",
+        "LEADS": {"Nathan P": "pakuwulo#6005", "Ramtin": "Ramtin#8911"},
     },
-
-    'PR': {
-        'FULL_NAME': 'Pocket Racers',
-        'LEADS': {
-            'Prem': '8BitRobot#3625',
-            'Cameron': 'cfiske#8209'
-        },
+    "PR": {
+        "FULL_NAME": "Pocket Racers",
+        "LEADS": {"Prem": "8BitRobot#3625", "Cameron": "cfiske#8209"},
     },
-
-    'WORKSHOPS': {
-        'FULL_NAME': 'Workshops',
-        'LEADS': {
-            'Jessica': 'Jessica Chang#5476',
-            'Caden': 'cdvs#2870'
-        },
+    "WORKSHOPS": {
+        "FULL_NAME": "Workshops",
+        "LEADS": {"Jessica": "Jessica Chang#5476", "Caden": "cdvs#2870"},
         # TODO: Change with updated spreadsheets and facebook groups when they're established
-        'FB_GROUP': 'https://www.facebook.com/groups/324536415200701'
-    }
+        "FB_GROUP": "https://www.facebook.com/groups/324536415200701",
+    },
 }
 
 # Checkoff Spreadsheet consts
-HEADER_ROWS = 3 # Project name, date, and completion %
-PROJECT_COL_INDEX = 2 # Index of first col that contains projects
-DATE_ROW_INDEX = 1 # Index of row that contains deadlines
-PERCENT_ROW_INDEX = 2 # Index of row that contains percentages
+HEADER_ROWS = 3  # Project name, date, and completion %
+PROJECT_COL_INDEX = 2  # Index of first col that contains projects
+DATE_ROW_INDEX = 1  # Index of row that contains deadlines
+PERCENT_ROW_INDEX = 2  # Index of row that contains percentages
 
 # Lab Hour Spreadsheet consts
-LAB_HOURS = '1t1_Idot1QyOnKLlXEGa0BijAa6OalRwYeZ3byehvQPY'
+LAB_HOURS = "1t1_Idot1QyOnKLlXEGa0BijAa6OalRwYeZ3byehvQPY"
 FIRST_LH_ROW_INDEX = 1
 FIRST_LH_COL_INDEX = 0
-LAB_HOURS_START_TIME = 10 # 10 AM
+LAB_HOURS_START_TIME = 10  # 10 AM
 NUM_DAYS_IN_TABLE = 6
 
 # Treasurer Deposit Sheet Constants
-TREASURER_SHEET = '1Xvkvt62ZiDtIzMjjwH6mMLY5Icn5gADDfSEfnydIWRk'
+TREASURER_SHEET = "1Xvkvt62ZiDtIzMjjwH6mMLY5Icn5gADDfSEfnydIWRk"
 PAY_DEPOSIT_COL = 2
 RETURN_DEPOSIT_COL = 4
 ASSIGNMENT_ROW = 3
