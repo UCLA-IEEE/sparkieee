@@ -6,6 +6,9 @@ from creds import *
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import structlog
+
+log = structlog.get_logger()
 
 # If modifying these scopes, delete the file token.pickle. https://developers.google.com/sheets/api/guides/authorizing
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
@@ -30,7 +33,7 @@ class SheetTransformer:
                 pickle.dump(creds, token)
 
         self.service = build("sheets", "v4", credentials=creds).spreadsheets()
-        print("Sheet Transformer built successfully using token.pickle")
+        log.info("Sheet Transformer built successfully using token.pickle")
 
     def lookup(self, spread_id, name=None, sheet_index=0):
         spread_info = self.service.get(spreadsheetId=spread_id).execute()

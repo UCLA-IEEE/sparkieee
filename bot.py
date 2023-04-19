@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 from discord.ext import commands, tasks
 from sheet_transformer import SheetTransformer
 from firebase_api import FirebaseManager, ErrorCodes
+import structlog
+
+log = structlog.get_logger()
 
 lab_open = True
 client = commands.Bot(command_prefix=".", help_command=None)
@@ -77,7 +80,7 @@ async def join_amp_announcement():
 
 @client.event
 async def on_ready():
-    print(f"SparkIEEE has logged in as {client.user}")
+    log.info(f"SparkIEEE has logged in as {client.user}")
     await client.change_presence(
         activity=discord.Game(
             name=f"taller than ASME duck 🦆 | {client.command_prefix}help"
@@ -292,6 +295,7 @@ async def project(ctx, *args):
             try:
                 projects = f'```\n{sheets.lookup(info["SPREAD_ID"])}```'
             except Exception as e:
+                log.info("Could not look up projects spreadsheet", args=args)
                 await ctx.send(e)
 
         if projects == "":
@@ -361,6 +365,7 @@ async def status(ctx, *args):
                 embed = discord.Embed(title=title, description=description, color=color)
                 await ctx.send(embed=embed)
             except Exception as e:
+                log.info("Failed reading spreadsheet", args=args)
                 await ctx.send(e)
         else:
             msg = f"{args[0]} does not currently have a checkoff sheet."
@@ -392,6 +397,7 @@ async def labhours(ctx, *args):
 
             await ctx.send(embed=embed)
         except Exception as e:
+            log.info("Failed showing all lab hours", args=args)
             await ctx.send(e)
     else:
         try:
@@ -422,6 +428,7 @@ async def labhours(ctx, *args):
                 )
                 await ctx.send(msg)
         except Exception as e:
+            log.info("Failed showing lab hours for a specific officer", args=args)
             await ctx.send(e)
 
 
@@ -454,6 +461,7 @@ async def paydeposit(ctx, *args):
                 sheet_index=info["TREASURER_IND"],
             )
         except Exception as e:
+            log.info("Failed paying deposit", args=args)
             await ctx.send(e)
             return
         if old_val == "TRUE":
@@ -496,6 +504,7 @@ async def returndeposit(ctx, *args):
                 sheet_index=info["TREASURER_IND"],
             )
         except Exception as e:
+            log.info("Failed returning deposit", args=args)
             await ctx.send(e)
             return
         if old_val == "TRUE":
@@ -536,6 +545,7 @@ async def checkoff(ctx, *args):
                     info["SPREAD_ID"], assignment=args[1], name=name, val=new_val
                 )
             except Exception as e:
+                log.info("Failed checkoff", args=args)
                 await ctx.send(e)
                 return
             if old_val == new_val:
@@ -571,6 +581,7 @@ async def checkoff_treasurer_subroutine(
             sheet_index=treasurer_index,
         )
     except Exception as e:
+        log.info("Failed treasurer checkoff", project, assignment, name)
         await ctx.send(e)
         return
     if old_val == new_val:
@@ -611,6 +622,7 @@ async def addassign(ctx, *args):
                 sheets.add_assignment(info["SPREAD_ID"], args[1], args[2])
                 msg = f"Successfully added assignment **{args[1]}** to the **{args[0]}** spreadsheet, due **{args[2]}**"
             except Exception as e:
+                log.info("Failed project assignment", args=args)
                 await ctx.send(e)
                 return
         else:
@@ -629,6 +641,7 @@ async def addassign_treasurer_subroutine(ctx, project, assignment, treasurer_ind
         msg += f"{project} leads: please update weights on Treasurer sheet.\n"
         msg += f"There are {num_assignments} total assignments\n"
     except Exception as e:
+        log.info("Failed assigning to Treasurer spreadsheet", project, assignment)
         await ctx.send(e)
         return
 
@@ -663,6 +676,7 @@ async def extend(ctx, *args):
                     f"from **{old_deadline}** to **{args[2]}**"
                 )
             except Exception as e:
+                log.info("Failed extending deadline", args=args)
                 await ctx.send(e)
         else:
             msg = f"{args[0]} does not currently have a checkoff sheet."
@@ -760,8 +774,12 @@ async def lab_hours_reminder():
 
             if lab_channel:
                 labhour_msg = await lab_channel.send(embed=embed)
-    except Exception as e:
-        print(e)
+                log.debug(
+                    "Successfully sent hourly lab hours message",
+                    labhour_msg,
+                )
+    except Exception:
+        log.exception("Lab hours reminder failed", labhour_msg)
 
 
 @lab_hours_reminder.before_loop
@@ -780,8 +798,9 @@ async def before():
             datetime(date.year, date.month, date.day, date.hour + 1, 0)
         )
     wait_period = (future - date).total_seconds()
-    print(
-        f"Waiting until {future} before starting lab hour reminders ({wait_period} seconds)."
+    log.info(
+        f"Waiting until {future} before starting lab hour reminders "
+        f"({wait_period} seconds)."
     )
     await asyncio.sleep(wait_period)
     print("Beginning Lab Hours scheduled reminders")
