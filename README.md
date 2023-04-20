@@ -2,48 +2,45 @@
 
 ## Installation
 
-Make sure you have Python (v3.9.1 in this case) and pip installed. Run the following command to install [discord.py](https://github.com/Rapptz/discord.py):
+[Poetry](https://python-poetry.org/) is used for dependency management. Follow
+the [Poetry docs](https://python-poetry.org/docs/#installation) to install it.
 
-```
-pip3 install discord.py --user
-```
+With Poetry installed, run the following command to install dependencies:
 
-Run the following command to install the Google Client library:
-
-```
-pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+```sh
+poetry install
 ```
 
 Follow the directions under the "Prerequisites" section in the Google Sheets API Python Quickstart Guide [here](https://developers.google.com/sheets/api/quickstart/python) to generate a `credentials.json` file. You'll need to [create a Google Cloud Platform project](https://developers.google.com/workspace/guides/create-project) and enable the Google Sheets API. Then you'll need to [generate credentials](https://developers.google.com/workspace/guides/create-credentials). Follow the directions to [generate a credentials json file](https://developers.google.com/workspace/guides/create-credentials#web) for a Desktop application. Rename it to `credentials.json` and drag it into the root directory.
 
 To generate a pickle file that allows the bot access to your account to read/write to Google Sheets, run the `bot.py` script. 
 
-```
+```sh
 python3 bot.py
 ```
 
 To generate a new one, just delete the existing `token.pickle` file and rerun the script. It will prompt you to login to your Google account and give the corresponding permissions.
 
-To access firebase in order to use the lab bucks commands, install the firebase admin package:
-```
-pip install firebase_admin
-```
-Firebase also requires credentials which should be in a file named `firebase_credentials.json`. To get this file, contact the owner of the firebase account.
+Firebase is necessary to use the lab bucks commands. It also requires
+credentials which should be in a file named `firebase_credentials.json`. To get
+this file, contact the owner of the firebase account.
 
 To create the Discord bot account, use the Discord developer portal to generate a Bot account. Under the 'OAuth2' menu, give the account a 'bot' scope and 'Administrator' privileges, then use the generated URL to invite the bot to the server.
 
 ## Testing 
 
-To deploy the bot locally, set the `SPARKIEEE_TOKEN` environment variable to the Discord bot token you generated:
+To deploy the bot locally, start a Poetry shell and set the `SPARKIEEE_TOKEN`
+environment variable to the Discord bot token you generated:
 
-```
+```sh
+poetry shell
 export SPARKIEEE_TOKEN=<DISCORD BOT TOKEN HERE>
 ```
 
 Run `bot.py`:
 
-```
-python3 bot.py
+```sh
+python bot.py
 ```
 
 Once the bot is connected to the server successfully, you will see the following message printed in your terminal:
@@ -81,8 +78,6 @@ Special thanks to the following contributors:
 * [Raj Piskala](https://github.com/RogueArt)
 
 ## Raspberry Pi Setup
-
-[Poetry](https://python-poetry.org/docs/) is used for dependency management.
 
 Poetry hangs indefinitely on Raspbian because it keeps checking the keyring. To
 make it work, put the following in `~/.bashrc`:
