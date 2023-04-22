@@ -776,10 +776,10 @@ async def lab_hours_reminder():
                 labhour_msg = await lab_channel.send(embed=embed)
                 log.debug(
                     "Successfully sent hourly lab hours message",
-                    labhour_msg,
+                    labhour_msg=labhour_msg, lab_channel=lab_channel,
                 )
     except Exception:
-        log.exception("Lab hours reminder failed", labhour_msg)
+        log.exception("Lab hours reminder failed", labhour_msg=labhour_msg)
 
 
 @lab_hours_reminder.before_loop
@@ -803,7 +803,7 @@ async def before():
         f"({wait_period} seconds)."
     )
     await asyncio.sleep(wait_period)
-    print("Beginning Lab Hours scheduled reminders")
+    log.info("Beginning Lab Hours scheduled reminders")
 
 
 # Helper functions added by Raj
