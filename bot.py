@@ -757,7 +757,16 @@ async def lab_hours_reminder():
 
     try:
         if labhour_msg:
-            await labhour_msg.delete()
+            try:
+                await labhour_msg.delete()
+                log.debug(
+                    "Deleted a lab hours reminder message", labhour_msg=labhour_msg
+                )
+            except discord.NotFound:
+                log.exception(
+                    "Could not find a lab hours reminder message to delete",
+                    labhour_msg=labhour_msg,
+                )
 
         if date.hour == 18:
             msg = "Lab Hours have officially ended. For a full list of lab hours, visit https://ieeebruins.com/lab."
@@ -776,7 +785,8 @@ async def lab_hours_reminder():
                 labhour_msg = await lab_channel.send(embed=embed)
                 log.debug(
                     "Successfully sent hourly lab hours message",
-                    labhour_msg=labhour_msg, lab_channel=lab_channel,
+                    labhour_msg=labhour_msg,
+                    lab_channel=lab_channel,
                 )
     except Exception:
         log.exception("Lab hours reminder failed", labhour_msg=labhour_msg)
