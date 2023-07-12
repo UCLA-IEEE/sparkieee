@@ -16,7 +16,7 @@ Follow the directions under the "Prerequisites" section in the Google Sheets API
 To generate a pickle file that allows the bot access to your account to read/write to Google Sheets, run the `bot.py` script. 
 
 ```sh
-python3 bot.py
+python bot.py
 ```
 
 To generate a new one, just delete the existing `token.pickle` file and rerun the script. It will prompt you to login to your Google account and give the corresponding permissions.
