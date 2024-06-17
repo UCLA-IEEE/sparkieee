@@ -39,7 +39,7 @@ DATE_ROW_INDEX = 1  # Index of row that contains deadlines
 PERCENT_ROW_INDEX = 2  # Index of row that contains percentages
 
 # Lab Hour Spreadsheet consts
-LAB_HOURS = "1t1_Idot1QyOnKLlXEGa0BijAa6OalRwYeZ3byehvQPY"
+LAB_HOURS = "1ekjyBZu6IzceRcC_9ncpnD-It4zwR6vNM-OYzj2ABys"
 FIRST_LH_ROW_INDEX = 1
 FIRST_LH_COL_INDEX = 0
 LAB_HOURS_START_TIME = 10  # 10 AM
